@@ -9,6 +9,19 @@
     "en": "EN",
     "zh": "中"
   },
+  "auth": {
+    "loginTitle": "登录",
+    "loginSubtitle": "Easy Dataset",
+    "email": "邮箱",
+    "password": "密码",
+    "login": "登录",
+    "logout": "退出",
+    "loginFailed": "登录失败",
+    "register": "注册",
+    "registerTitle": "创建管理员账户",
+    "registerSubtitle": "首次设置：创建初始管理员账户",
+    "adminExists": "管理员账户已存在，请登录。"
+  },
   "theme": {
     "switchToLight": "切换到亮色模式",
     "switchToDark": "切换到暗色模式"

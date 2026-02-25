@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getImageDatasetsTagsByProject } from '@/lib/db/imageDatasets';
 
 // 获取项目中所有已使用的标签
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId } = params;
 
     // 获取项目的所有数据集

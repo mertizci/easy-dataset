@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import path from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { requireAuth } from '@/lib/auth/apiGuard';
 
 const execAsync = promisify(exec);
 
@@ -12,6 +13,11 @@ const execAsync = promisify(exec);
  */
 export async function POST(request) {
   try {
+    const { session, response: authError } = await requireAuth(request);
+    if (authError) return authError;
+    if (session.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden', message: 'Admin only' }, { status: 403 });
+    }
     const { projectId } = await request.json();
 
     if (!projectId) {

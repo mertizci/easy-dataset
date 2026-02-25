@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getDatasetsById, updateDataset } from '@/lib/db/datasets';
 import { getQuestionById } from '@/lib/db/questions';
 import { getChunkById } from '@/lib/db/chunks';
@@ -9,6 +10,8 @@ import { extractJsonFromLLMOutput } from '@/lib/llm/common/util';
 // 优化数据集答案
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId } = params;
 
     // 验证项目ID

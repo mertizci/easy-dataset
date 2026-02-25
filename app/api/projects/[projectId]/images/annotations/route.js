@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { PrismaClient } from '@prisma/client';
 import { getImageById, getImageChunk } from '@/lib/db/images';
 import { createImageDataset } from '@/lib/db/imageDatasets';
@@ -8,6 +9,8 @@ const prisma = new PrismaClient();
 // 创建标注
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const { imageId, questionId, question, answerType, answer, note } = await request.json();
 

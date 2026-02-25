@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { distillTagsPrompt } from '@/lib/llm/prompts/distillTags';
 import { db } from '@/lib/db';
 import { getProject } from '@/lib/db/projects';
@@ -10,6 +11,8 @@ const LLMClient = require('@/lib/llm/core');
  */
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId } = params;
 
     // 验证项目ID

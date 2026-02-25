@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getEvalQuestionsWithPagination, getEvalQuestionsStats, deleteEvalQuestion } from '@/lib/db/evalDatasets';
 
 /**
@@ -6,6 +7,8 @@ import { getEvalQuestionsWithPagination, getEvalQuestionsStats, deleteEvalQuesti
  */
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const { searchParams } = new URL(request.url);
 
@@ -58,6 +61,8 @@ export async function GET(request, { params }) {
  */
 export async function DELETE(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { ids } = await request.json();
 
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
@@ -85,6 +90,8 @@ export async function DELETE(request, { params }) {
  */
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const body = await request.json();
 

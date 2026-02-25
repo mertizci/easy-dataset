@@ -3,6 +3,7 @@ import { createInitModelConfig, getModelConfigByProjectId, saveModelConfig } fro
 import { DEFAULT_MODEL_SETTINGS, MODEL_PROVIDERS } from '@/constant/model';
 import { getProject } from '@/lib/db/projects';
 import { sortProvidersByPriority } from '@/lib/util/providerLogo';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 
 function normalizeModelEndpoint(endpoint = '') {
   let normalizedEndpoint = String(endpoint).trim();
@@ -18,6 +19,8 @@ function normalizeModelEndpoint(endpoint = '') {
 // 获取模型配置列表
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId } = params;
     // 验证项目 ID
     if (!projectId) {
@@ -59,6 +62,8 @@ export async function GET(request, { params }) {
 // 保存模型配置
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId } = params;
 
     // 验证项目 ID

@@ -16,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import ProjectCard from './ProjectCard';
 
-export default function ProjectList({ projects, onCreateProject }) {
+export default function ProjectList({ projects, onCreateProject, isAdmin = true }) {
   const { t } = useTranslation();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState(null);
@@ -40,7 +40,8 @@ export default function ProjectList({ projects, onCreateProject }) {
     try {
       setLoading(true);
       const response = await fetch(`/api/projects/${projectToDelete.id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        credentials: 'include'
       });
 
       if (!response.ok) {
@@ -68,15 +69,20 @@ export default function ProjectList({ projects, onCreateProject }) {
               <Typography variant="h6" color="text.secondary" gutterBottom>
                 {t('projects.noProjects')}
               </Typography>
+              {onCreateProject && (
               <Button variant="contained" onClick={onCreateProject} startIcon={<AddCircleOutlineIcon />} sx={{ mt: 2 }}>
                 {t('projects.createFirst')}
               </Button>
+              )}
             </Paper>
           </Grid>
         ) : (
           projects.map(project => (
             <Grid item xs={12} sm={6} md={4} key={project.id}>
-              <ProjectCard project={project} onDeleteClick={handleOpenDeleteDialog} />
+              <ProjectCard
+                project={project}
+                onDeleteClick={isAdmin ? handleOpenDeleteDialog : undefined}
+              />
             </Grid>
           ))
         )}

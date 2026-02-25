@@ -3,12 +3,18 @@ import { db } from '@/lib/db/index';
 import fs from 'fs';
 import path from 'path';
 import { NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth/apiGuard';
 
 /**
  * Get list of unmigrated projects
  * @returns {Promise<Response>} Response containing unmigrated project IDs
  */
 export async function GET(request) {
+  const { session, response: authError } = await requireAuth(request);
+  if (authError) return authError;
+  if (session.role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden', message: 'Admin only' }, { status: 403 });
+  }
   // Read query params from request URL
   const { searchParams } = new URL(request.url);
   // Force a unique value per request

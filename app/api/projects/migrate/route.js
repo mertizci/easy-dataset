@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { main } from '@/lib/db/fileToDb';
+import { requireAuth } from '@/lib/auth/apiGuard';
 
 // Store migration task states
 const migrationTasks = new Map();
@@ -7,8 +8,13 @@ const migrationTasks = new Map();
 /**
  * Start a migration task
  */
-export async function POST() {
+export async function POST(request) {
   try {
+    const { session, response: authError } = await requireAuth(request);
+    if (authError) return authError;
+    if (session.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden', message: 'Admin only' }, { status: 403 });
+    }
     // Generate a unique task ID
     const taskId = Date.now().toString();
 
@@ -47,6 +53,8 @@ export async function POST() {
  */
 export async function GET(request) {
   try {
+    const { session, response: authError } = await requireAuth(request);
+    if (authError) return authError;
     // Get task ID from URL
     const { searchParams } = new URL(request.url);
     const taskId = searchParams.get('taskId');

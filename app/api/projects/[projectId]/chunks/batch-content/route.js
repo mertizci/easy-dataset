@@ -1,8 +1,11 @@
 import { getChunkContentsByNames } from '@/lib/db/chunks';
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const { chunkNames } = await request.json();
 

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { saveChunks, deleteChunksByFileId } from '@/lib/db/chunks';
 import path from 'path';
 import fs from 'fs/promises';
@@ -12,6 +13,8 @@ import { getProjectRoot } from '@/lib/db/base';
  */
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const { fileId, fileName, content, splitPoints } = await request.json();
 

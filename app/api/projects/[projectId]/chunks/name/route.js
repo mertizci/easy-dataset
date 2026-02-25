@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getChunkByName } from '@/lib/db/chunks';
 
 /**
@@ -9,6 +10,8 @@ import { getChunkByName } from '@/lib/db/chunks';
  */
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId } = params;
 
     // 从查询参数中获取 chunkName

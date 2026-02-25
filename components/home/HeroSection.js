@@ -83,6 +83,7 @@ export default function HeroSection({ onCreateProject }) {
               gap: { xs: 2, sm: 3 }
             }}
           >
+            {onCreateProject && (
             <Button
               variant="contained"
               size="large"
@@ -104,6 +105,7 @@ export default function HeroSection({ onCreateProject }) {
             >
               {t('home.createProject')}
             </Button>
+            )}
             <Button
               variant="contained"
               size="large"

@@ -9,13 +9,19 @@ import {
   deleteDatasetConversation,
   getConversationNavigationItems
 } from '@/lib/db/dataset-conversations';
+import { requireAuth, requireProjectAccess, isRatingOnlyUser } from '@/lib/auth/apiGuard';
 
 /**
  * 获取单个多轮对话数据集详情
  */
 export async function GET(request, { params }) {
   try {
+    const { session, response: authError } = await requireAuth(request);
+    if (authError) return authError;
+
     const { projectId, conversationId } = params;
+    const { allowed, response: accessError } = await requireProjectAccess(session.userId, projectId);
+    if (accessError) return accessError;
     const { searchParams } = new URL(request.url);
     const operateType = searchParams.get('operateType');
 
@@ -62,10 +68,17 @@ export async function GET(request, { params }) {
 
 /**
  * 更新多轮对话数据集
+ * Reviewer: 仅允许更新 score
  */
 export async function PUT(request, { params }) {
   try {
+    const { session, response: authError } = await requireAuth(request);
+    if (authError) return authError;
+
     const { projectId, conversationId } = params;
+    const { allowed, response: accessError } = await requireProjectAccess(session.userId, projectId);
+    if (accessError) return accessError;
+
     const body = await request.json();
 
     // 验证对话数据集是否存在且属于项目
@@ -91,8 +104,11 @@ export async function PUT(request, { params }) {
       );
     }
 
-    // 只允许更新特定字段
-    const allowedFields = ['score', 'tags', 'note', 'confirmed', 'aiEvaluation', 'messages'];
+    // Reviewer: 仅允许更新 score
+    const ratingOnly = await isRatingOnlyUser(session.userId, projectId);
+    const allowedFields = ratingOnly
+      ? ['score']
+      : ['score', 'tags', 'note', 'confirmed', 'aiEvaluation', 'messages'];
     const updateData = {};
 
     allowedFields.forEach(field => {
@@ -135,10 +151,16 @@ export async function PUT(request, { params }) {
 }
 
 /**
- * 删除多轮对话数据集
+ * 删除多轮对话数据集（仅 admin）
  */
 export async function DELETE(request, { params }) {
   try {
+    const { session, response: authError } = await requireAuth(request);
+    if (authError) return authError;
+    if (session.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden', message: 'Admin only' }, { status: 403 });
+    }
+
     const { projectId, conversationId } = params;
 
     // 验证对话数据集是否存在且属于项目

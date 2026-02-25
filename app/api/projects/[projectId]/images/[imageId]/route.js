@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getImageDetailWithQuestions } from '@/lib/services/images';
 
 // 根据图片ID获取图片详情，包含问题列表和已标注数据
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId, imageId } = params;
 
     // 调用服务层获取图片详情

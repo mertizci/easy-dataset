@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import fs from 'fs';
 import path from 'path';
 import { getProjectRoot } from '@/lib/db/base';
@@ -7,6 +8,8 @@ import { getUploadFileInfoById } from '@/lib/db/upload-files';
 // 获取文件内容
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId, fileId } = params;
 
     // 验证参数

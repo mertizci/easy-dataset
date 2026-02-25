@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import path from 'path';
 import fs from 'fs';
 import { getProjectRoot } from '@/lib/db/base';
@@ -6,6 +7,8 @@ import { getDatasets } from '@/lib/db/datasets';
 
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const { formatType, systemPrompt, confirmedOnly, includeCOT, reasoningLanguage } = await request.json();
 

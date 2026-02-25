@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { batchDeleteQuestions } from '@/lib/db/questions';
 
 // 批量删除问题
-export async function DELETE(request) {
+export async function DELETE(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const body = await request.json();
     const { questionIds } = body;
 

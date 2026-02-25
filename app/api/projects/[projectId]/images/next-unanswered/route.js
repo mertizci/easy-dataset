@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { PrismaClient } from '@prisma/client';
 import { getImageDetailWithQuestions } from '@/lib/services/images';
 
@@ -7,6 +8,8 @@ const prisma = new PrismaClient();
 // 获取下一个有未标注问题的图片
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId } = params;
 
     // 查找第一个有未标注问题的图片

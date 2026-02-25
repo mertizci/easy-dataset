@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getImages, deleteImage, getImageDetail } from '@/lib/db/images';
 import { getProjectPath } from '@/lib/db/base';
 import { db } from '@/lib/db/index';
@@ -9,6 +10,8 @@ import path from 'path';
 // 获取图片列表
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const { searchParams } = new URL(request.url);
 
@@ -31,6 +34,8 @@ export async function GET(request, { params }) {
 // 导入图片
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const { directories } = await request.json();
 
@@ -47,6 +52,8 @@ export async function POST(request, { params }) {
 // 删除图片
 export async function DELETE(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const { searchParams } = new URL(request.url);
     const imageId = searchParams.get('imageId');

@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 
 // 获取默认提示词内容
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { searchParams } = new URL(request.url);
     const promptType = searchParams.get('promptType');
     const promptKey = searchParams.get('promptKey');

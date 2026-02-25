@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { db } from '@/lib/db/index';
 
 /**
@@ -6,6 +7,8 @@ import { db } from '@/lib/db/index';
  */
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId } = params;
 
     // Fetch tags for all datasets in the project

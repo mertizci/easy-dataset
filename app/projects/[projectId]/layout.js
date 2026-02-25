@@ -24,9 +24,9 @@ export default function ProjectLayout({ children, params }) {
       setLoading(true);
 
       const [projectsResponse, projectResponse, modelConfigResponse] = await Promise.all([
-        fetch('/api/projects'),
-        fetch(`/api/projects/${projectId}`),
-        fetch(`/api/projects/${projectId}/model-config`)
+        fetch('/api/projects', { credentials: 'include' }),
+        fetch(`/api/projects/${projectId}`, { credentials: 'include' }),
+        fetch(`/api/projects/${projectId}/model-config`, { credentials: 'include' })
       ]);
 
       if (!projectsResponse.ok) {

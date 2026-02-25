@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { splitProjectFile, getProjectChunks } from '@/lib/file/text-splitter';
 import { getProject, updateProject } from '@/lib/db/projects';
 import { getTags } from '@/lib/db/tags';
@@ -7,6 +8,8 @@ import { handleDomainTree } from '@/lib/util/domain-tree';
 // 处理文本分割请求
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId } = params;
 
     // 获取请求体
@@ -62,6 +65,8 @@ export async function POST(request, { params }) {
 // 获取项目中的所有文本块
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const { searchParams } = new URL(request.url);
     const filter = searchParams.get('filter');

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getProject } from '@/lib/db/projects';
 import path from 'path';
 import { getProjectRoot, ensureDir } from '@/lib/db/base';
@@ -22,6 +23,8 @@ export const bodyParser = false;
 // 获取项目文件列表
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId } = params;
 
     // 验证项目ID
@@ -53,6 +56,8 @@ export async function GET(request, { params }) {
 // 删除文件
 export async function DELETE(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const { searchParams } = new URL(request.url);
     const fileId = searchParams.get('fileId');
@@ -152,6 +157,8 @@ export async function DELETE(request, { params }) {
 
 // 上传文件
 export async function POST(request, { params }) {
+  const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+  if (auth.response) return auth.response;
   console.log('File upload request processing, parameters:', params);
   const { projectId } = params;
 

@@ -1,13 +1,19 @@
 import { NextResponse } from 'next/server';
 import { getImageDatasetById, updateImageDataset, deleteImageDataset } from '@/lib/db/imageDatasets';
 import { getProjectPath } from '@/lib/db/base';
+import { requireAuth, requireProjectAccess, isRatingOnlyUser } from '@/lib/auth/apiGuard';
 import fs from 'fs/promises';
 import path from 'path';
 
 // 获取单个数据集详情
 export async function GET(request, { params }) {
   try {
+    const { session, response: authError } = await requireAuth(request);
+    if (authError) return authError;
+
     const { projectId, datasetId } = params;
+    const { allowed, response: accessError } = await requireProjectAccess(session.userId, projectId);
+    if (accessError) return accessError;
 
     const dataset = await getImageDatasetById(datasetId);
 
@@ -45,15 +51,28 @@ export async function GET(request, { params }) {
 }
 
 // 更新数据集
+// Reviewer: 仅允许更新 score
 export async function PUT(request, { params }) {
   try {
+    const { session, response: authError } = await requireAuth(request);
+    if (authError) return authError;
+
     const { projectId, datasetId } = params;
-    const updates = await request.json();
+    const { allowed, response: accessError } = await requireProjectAccess(session.userId, projectId);
+    if (accessError) return accessError;
+
+    let updates = await request.json();
 
     // 验证数据集存在且属于该项目
     const dataset = await getImageDatasetById(datasetId);
     if (!dataset || dataset.projectId !== projectId) {
       return NextResponse.json({ error: 'Dataset not found' }, { status: 404 });
+    }
+
+    // Reviewer: 仅允许更新 score
+    const ratingOnly = await isRatingOnlyUser(session.userId, projectId);
+    if (ratingOnly) {
+      updates = { score: updates.score };
     }
 
     // 更新数据集
@@ -88,9 +107,15 @@ export async function PUT(request, { params }) {
   }
 }
 
-// 删除数据集
+// 删除数据集（仅 admin）
 export async function DELETE(request, { params }) {
   try {
+    const { session, response: authError } = await requireAuth(request);
+    if (authError) return authError;
+    if (session.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden', message: 'Admin only' }, { status: 403 });
+    }
+
     const { projectId, datasetId } = params;
 
     // 验证数据集存在且属于该项目

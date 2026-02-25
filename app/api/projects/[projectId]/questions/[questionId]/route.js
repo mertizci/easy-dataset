@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { deleteQuestion } from '@/lib/db/questions';
 
 // 删除单个问题
 export async function DELETE(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId, questionId } = params;
 
     // 验证参数

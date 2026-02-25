@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { deleteChunkById, getChunkById, updateChunkById } from '@/lib/db/chunks';
 
 // 获取文本块内容
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId, chunkId } = params;
     // 验证参数
     if (!projectId) {
@@ -25,6 +28,8 @@ export async function GET(request, { params }) {
 // 删除文本块
 export async function DELETE(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId, chunkId } = params;
     // 验证参数
     if (!projectId) {
@@ -45,6 +50,8 @@ export async function DELETE(request, { params }) {
 // 编辑文本块内容
 export async function PATCH(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId, chunkId } = params;
 
     // 验证参数

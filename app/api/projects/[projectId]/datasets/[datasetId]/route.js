@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server';
 import { getDatasetsById, getDatasetsCounts, getNavigationItems, updateDatasetMetadata } from '@/lib/db/datasets';
+import { requireAuth, requireProjectAccess, isRatingOnlyUser } from '@/lib/auth/apiGuard';
 
 /**
  * 获取项目的所有数据集
  */
 export async function GET(request, { params }) {
   try {
+    const { session, response: authError } = await requireAuth(request);
+    if (authError) return authError;
+
     const { projectId, datasetId } = params;
+    const { allowed, response: accessError } = await requireProjectAccess(session.userId, projectId);
+    if (accessError) return accessError;
     // 验证项目ID
     if (!projectId) {
       return NextResponse.json({ error: '项目ID不能为空' }, { status: 400 });
@@ -37,28 +43,33 @@ export async function GET(request, { params }) {
 
 /**
  * 更新数据集元数据（评分、标签、备注）
+ * Reviewer: 仅允许更新 score
  */
 export async function PATCH(request, { params }) {
   try {
-    const { projectId, datasetId } = params;
+    const { session, response: authError } = await requireAuth(request);
+    if (authError) return authError;
 
-    // 验证参数
-    if (!projectId) {
-      return NextResponse.json({ error: '项目ID不能为空' }, { status: 400 });
-    }
-    if (!datasetId) {
-      return NextResponse.json({ error: '数据集ID不能为空' }, { status: 400 });
-    }
+    const { projectId, datasetId } = params;
+    const { allowed, response: accessError } = await requireProjectAccess(session.userId, projectId);
+    if (accessError) return accessError;
 
     const body = await request.json();
-    const { score, tags, note } = body;
+    let { score, tags, note } = body;
+
+    // Reviewer: 仅允许更新 score
+    const ratingOnly = await isRatingOnlyUser(session.userId, projectId);
+    if (ratingOnly) {
+      tags = undefined;
+      note = undefined;
+    }
 
     // 验证评分范围
     if (score !== undefined && (score < 0 || score > 5)) {
       return NextResponse.json({ error: '评分必须在0-5之间' }, { status: 400 });
     }
 
-    // 验证标签格式
+    // 验证标签格式（仅 admin）
     if (tags !== undefined && !Array.isArray(tags)) {
       return NextResponse.json({ error: '标签必须是数组格式' }, { status: 400 });
     }

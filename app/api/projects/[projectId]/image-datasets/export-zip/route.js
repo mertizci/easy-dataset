@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getImageDatasetsForExport } from '@/lib/db/imageDatasets';
 import archiver from 'archiver';
 import { getProjectPath } from '@/lib/db/base';
@@ -10,6 +11,8 @@ import fs from 'fs';
  */
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const { searchParams } = new URL(request.url);
     const confirmedOnly = searchParams.get('confirmedOnly') === 'true';

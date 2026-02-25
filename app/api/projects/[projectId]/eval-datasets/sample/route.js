@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { db } from '@/lib/db';
 import { buildEvalQuestionWhere } from '@/lib/db/evalDatasets';
 
@@ -16,6 +17,8 @@ function shuffleArray(arr) {
 
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const body = await request.json();
 

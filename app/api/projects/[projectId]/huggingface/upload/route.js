@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getProject } from '@/lib/db/projects';
 import { getDatasets } from '@/lib/db/datasets';
 import fs from 'fs';
@@ -9,6 +10,8 @@ import { uploadFiles, createRepo, checkRepoAccess } from '@huggingface/hub';
 // 上传数据集到 HuggingFace
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const projectId = params.projectId;
     const {
       token,

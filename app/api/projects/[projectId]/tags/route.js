@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getTags, createTag, updateTag, deleteTag } from '@/lib/db/tags';
 import { getQuestionsByTagName } from '@/lib/db/questions';
 
 // 获取项目的标签树
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId } = params;
 
     // 验证项目ID
@@ -25,6 +28,8 @@ export async function GET(request, { params }) {
 // 更新项目的标签树
 export async function PUT(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId } = params;
 
     // 验证项目ID
@@ -50,6 +55,8 @@ export async function PUT(request, { params }) {
 
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId } = params;
 
     // 验证项目ID
@@ -69,6 +76,8 @@ export async function POST(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId } = params;
 
     // 验证项目ID

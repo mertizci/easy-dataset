@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getProjectChunks } from '@/lib/file/text-splitter';
 import { getTaskConfig } from '@/lib/db/projects';
 import { getChunkById } from '@/lib/db/chunks';
@@ -7,6 +8,8 @@ import { generateQuestionsForChunk, generateQuestionsForChunkWithGA } from '@/li
 // 批量生成问题
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId } = params;
 
     // 验证项目ID

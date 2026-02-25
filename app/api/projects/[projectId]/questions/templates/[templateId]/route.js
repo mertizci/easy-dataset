@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import templateDb from '@/lib/db/questionTemplates';
 import { generateQuestionsFromTemplateEdit } from '@/lib/services/questions/template';
 
 // 获取单个模板
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { templateId } = params;
 
     const template = await templateDb.getTemplateById(templateId);
@@ -32,6 +35,8 @@ export async function GET(request, { params }) {
 // 更新问题模板
 export async function PUT(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId, templateId } = params;
     const data = await request.json();
 
@@ -89,6 +94,8 @@ export async function PUT(request, { params }) {
 // 删除问题模板
 export async function DELETE(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { templateId } = params;
 
     // 检查是否有关联的问题

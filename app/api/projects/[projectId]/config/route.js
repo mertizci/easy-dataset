@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getProject, updateProject, getTaskConfig } from '@/lib/db/projects';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 
 // 获取项目配置
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const projectId = params.projectId;
     const config = await getProject(projectId);
     const taskConfig = await getTaskConfig(projectId);
@@ -17,6 +20,8 @@ export async function GET(request, { params }) {
 // 更新项目配置
 export async function PUT(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const projectId = params.projectId;
     const newConfig = await request.json();
     const currentConfig = await getProject(projectId);

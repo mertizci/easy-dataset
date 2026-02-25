@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import {
   getAllQuestionsByProjectId,
   getQuestions,
@@ -11,6 +12,8 @@ import { getImageById, getImageChunk } from '@/lib/db/images';
 // 获取项目的所有问题
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId } = params;
     // 验证项目ID
     if (!projectId) {
@@ -63,6 +66,8 @@ export async function GET(request, { params }) {
 // 新增问题
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const body = await request.json();
     const { question, chunkId, label } = body;
@@ -92,8 +97,10 @@ export async function POST(request, { params }) {
 }
 
 // 更新问题
-export async function PUT(request) {
+export async function PUT(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const body = await request.json();
     // 保存更新后的数据
     const { imageId } = body;

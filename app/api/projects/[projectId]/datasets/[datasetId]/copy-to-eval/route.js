@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { db } from '@/lib/db';
 
 export async function POST(req, { params }) {
   try {
+    const auth = await requireProjectAuth(req, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId, datasetId } = params;
 
     // 1. 获取数据集详情

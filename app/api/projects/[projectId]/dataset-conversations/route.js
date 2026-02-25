@@ -9,12 +9,15 @@ import {
   createDatasetConversation
 } from '@/lib/db/dataset-conversations';
 import { generateMultiTurnConversation } from '@/lib/services/multi-turn/index';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 
 /**
  * 获取多轮对话数据集列表（支持分页和筛选）
  */
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const { searchParams } = new URL(request.url);
 
@@ -69,6 +72,8 @@ export async function GET(request, { params }) {
  */
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const body = await request.json();
 

@@ -13,6 +13,19 @@
     "switchToLight": "Switch to Light Mode",
     "switchToDark": "Switch to Dark Mode"
   },
+  "auth": {
+    "loginTitle": "Sign In",
+    "loginSubtitle": "Easy Dataset",
+    "email": "Email",
+    "password": "Password",
+    "login": "Sign In",
+    "logout": "Sign Out",
+    "loginFailed": "Login failed",
+    "register": "Register",
+    "registerTitle": "Create Admin Account",
+    "registerSubtitle": "First-time setup: create the initial admin account",
+    "adminExists": "An admin account already exists. Please sign in."
+  },
   "settings": {
     "promptConfig": "Prompt Configuration",
     "promptsDescription": "Configure prompt used in the project, supporting global prompts and scenario-specific prompts.",

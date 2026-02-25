@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getImageDatasetsByProject } from '@/lib/db/imageDatasets';
 import { getProjectPath } from '@/lib/db/base';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import fs from 'fs/promises';
 import path from 'path';
 
 // 获取图片数据集列表
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const { searchParams } = new URL(request.url);
 

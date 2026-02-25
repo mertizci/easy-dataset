@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { db } from '@/lib/db/index';
 import { buildEvalQuestionWhere } from '@/lib/db/evalDatasets';
 
@@ -50,6 +51,8 @@ function formatExportItem(item) {
  */
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const body = await request.json();
 
@@ -199,6 +202,8 @@ export async function POST(request, { params }) {
  */
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const { searchParams } = new URL(request.url);
 

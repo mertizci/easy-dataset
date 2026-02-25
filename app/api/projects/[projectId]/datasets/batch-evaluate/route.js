@@ -4,6 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { db } from '@/lib/db/index';
 import { processTask } from '@/lib/services/tasks/index';
 
@@ -12,6 +13,8 @@ import { processTask } from '@/lib/services/tasks/index';
  */
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const { model, language = 'zh-CN' } = await request.json();
 

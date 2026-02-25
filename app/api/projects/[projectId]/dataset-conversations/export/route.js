@@ -4,6 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getAllDatasetConversations } from '@/lib/db/dataset-conversations';
 
 /**
@@ -11,6 +12,8 @@ import { getAllDatasetConversations } from '@/lib/db/dataset-conversations';
  */
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const { searchParams } = new URL(request.url);
 

@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { deleteModelConfigById } from '@/lib/db/model-config';
 
 // 删除模型配置
 export async function DELETE(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId, modelConfigId } = params;
     // 验证项目 ID
     if (!projectId) {

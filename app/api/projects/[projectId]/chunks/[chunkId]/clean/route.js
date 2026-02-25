@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import logger from '@/lib/util/logger';
 import cleanService from '@/lib/services/clean';
 
 // 为指定文本块进行数据清洗
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId, chunkId } = params;
 
     // 验证项目ID和文本块ID

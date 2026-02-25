@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import LLMClient from '@/lib/llm/core/index';
 import { getModelConfigById } from '@/lib/db/model-config';
 
@@ -31,6 +32,8 @@ async function resolveLatestModelConfig(projectId, incomingModel = {}) {
  * Streaming chat endpoint.
  */
 export async function POST(request, { params }) {
+  const auth = await requireProjectAuth(request, params);
+  if (auth.response) return auth.response;
   const { projectId } = params;
 
   try {

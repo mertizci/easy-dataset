@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import {
   getCustomPrompts,
   getCustomPrompt,
@@ -12,6 +13,8 @@ import {
 // 获取项目的自定义提示词
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const { searchParams } = new URL(request.url);
     const promptType = searchParams.get('promptType');
@@ -38,6 +41,8 @@ export async function GET(request, { params }) {
 // 保存自定义提示词
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const body = await request.json();
 
@@ -79,6 +84,8 @@ export async function POST(request, { params }) {
 // 删除自定义提示词
 export async function DELETE(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const { searchParams } = new URL(request.url);
     const promptType = searchParams.get('promptType');

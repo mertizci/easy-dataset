@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getProjectPath } from '@/lib/db/base';
 import { importImagesFromDirectories } from '@/lib/services/images';
 import fs from 'fs/promises';
@@ -11,6 +12,8 @@ export async function POST(request, { params }) {
   let tempExtractDir = null;
 
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const formData = await request.formData();
     const zipFile = formData.get('file');

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getImageDatasetsForExport } from '@/lib/db/imageDatasets';
 
 /**
@@ -6,6 +7,8 @@ import { getImageDatasetsForExport } from '@/lib/db/imageDatasets';
  */
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const body = await request.json();
 

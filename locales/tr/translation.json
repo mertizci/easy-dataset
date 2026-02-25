@@ -11,6 +11,19 @@
     "zh": "中",
     "tr": "TR"
   },
+  "auth": {
+    "loginTitle": "Giriş Yap",
+    "loginSubtitle": "Easy Dataset",
+    "email": "E-posta",
+    "password": "Şifre",
+    "login": "Giriş Yap",
+    "logout": "Çıkış",
+    "loginFailed": "Giriş başarısız",
+    "register": "Kayıt Ol",
+    "registerTitle": "Admin Hesabı Oluştur",
+    "registerSubtitle": "İlk kurulum: başlangıç admin hesabını oluşturun",
+    "adminExists": "Admin hesabı zaten mevcut. Lütfen giriş yapın."
+  },
   "theme": {
     "switchToLight": "Açık Moda Geç",
     "switchToDark": "Koyu Moda Geç"

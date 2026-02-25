@@ -3,15 +3,19 @@
 import React from 'react';
 import { Box, IconButton, Tooltip } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'next/navigation';
+import { useSetAtom } from 'jotai';
 import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
 import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import BarChartIcon from '@mui/icons-material/BarChart';
+import LogoutIcon from '@mui/icons-material/Logout';
 import LanguageSwitcher from '../LanguageSwitcher';
 import UpdateChecker from '../UpdateChecker';
 import TaskIcon from '../TaskIcon';
 import ModelSelect from '../ModelSelect';
+import { authAtom } from '@/lib/store';
 import * as styles from './styles';
 
 /**
@@ -27,6 +31,14 @@ export default function ActionButtons({
   onActionAreaEnter
 }) {
   const { t, i18n } = useTranslation();
+  const router = useRouter();
+  const setAuth = useSetAtom(authAtom);
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    setAuth({ user: null, token: null, isAuthenticated: false });
+    router.push('/login');
+  };
   const isZhLanguage = String(i18n.language || '')
     .toLowerCase()
     .startsWith('zh');
@@ -44,6 +56,18 @@ export default function ActionButtons({
           </IconButton>
         </Tooltip>
       )}
+
+      {/* Logout - Always visible */}
+      <Tooltip title={t('auth.logout')}>
+        <IconButton
+          onClick={handleLogout}
+          size="medium"
+          aria-label={t('auth.logout')}
+          sx={styles.getIconButtonStyles(theme)}
+        >
+          <LogoutIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
 
       {/* Language Switcher - Always visible */}
       <LanguageSwitcher />

@@ -10,8 +10,29 @@ import CreateProjectDialog from '@/components/home/CreateProjectDialog';
 import MigrationDialog from '@/components/home/MigrationDialog';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { authAtom } from '@/lib/store';
 
 export default function Home() {
+  const auth = useAtomValue(authAtom);
+  const setAuth = useSetAtom(authAtom);
+  const isAdmin = auth?.user?.role === 'admin';
+
+  // Hydrate auth from server (e.g. after refresh with cookie)
+  useEffect(() => {
+    fetch('/api/auth/me', { credentials: 'include' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.user) {
+          setAuth((prev) => ({
+            user: data.user,
+            token: prev?.token || '',
+            isAuthenticated: true
+          }));
+        }
+      })
+      .catch(() => {});
+  }, [setAuth]);
   const { t } = useTranslation();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +46,7 @@ export default function Home() {
       try {
         setLoading(true);
         // 获取用户创建的项目详情
-        const response = await fetch(`/api/projects`);
+        const response = await fetch('/api/projects', { credentials: 'include' });
 
         if (!response.ok) {
           throw new Error(t('projects.fetchFailed'));
@@ -47,7 +68,7 @@ export default function Home() {
     // 检查未迁移的项目
     async function checkUnmigratedProjects() {
       try {
-        const response = await fetch('/api/projects/unmigrated');
+        const response = await fetch('/api/projects/unmigrated', { credentials: 'include' });
 
         if (!response.ok) {
           console.error('检查未迁移项目失败');
@@ -74,7 +95,7 @@ export default function Home() {
     <main style={{ overflow: 'hidden', position: 'relative' }}>
       <Navbar projects={projects} />
 
-      <HeroSection onCreateProject={() => setCreateDialogOpen(true)} />
+      <HeroSection onCreateProject={isAdmin ? () => setCreateDialogOpen(true) : undefined} />
 
       <Container
         maxWidth="lg"
@@ -135,7 +156,11 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <ProjectList projects={projects} onCreateProject={() => setCreateDialogOpen(true)} />
+            <ProjectList
+              projects={projects}
+              onCreateProject={isAdmin ? () => setCreateDialogOpen(true) : undefined}
+              isAdmin={isAdmin}
+            />
           </motion.div>
         )}
       </Container>

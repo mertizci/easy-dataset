@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getQuestionsForChunk } from '@/lib/db/questions';
 import logger from '@/lib/util/logger';
 import questionService from '@/lib/services/questions';
@@ -6,6 +7,8 @@ import questionService from '@/lib/services/questions';
 // 为指定文本块生成问题
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId, chunkId } = params;
 
     // 验证项目ID和文本块ID
@@ -50,6 +53,8 @@ export async function POST(request, { params }) {
 // 获取指定文本块的问题
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId, chunkId } = params;
 
     // 验证项目ID和文本块ID

@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getImageByName } from '@/lib/db/images';
 import imageService from '@/lib/services/images';
 
 // 生成图像数据集
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const { imageName, question, model, language = 'zh', previewOnly = false } = await request.json();
 

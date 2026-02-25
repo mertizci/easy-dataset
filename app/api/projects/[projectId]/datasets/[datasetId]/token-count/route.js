@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getDatasetsById } from '@/lib/db/datasets';
 import { getEncoding } from '@langchain/core/utils/tiktoken';
 
@@ -7,6 +8,8 @@ import { getEncoding } from '@langchain/core/utils/tiktoken';
  */
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId, datasetId } = params;
 
     if (!datasetId) {

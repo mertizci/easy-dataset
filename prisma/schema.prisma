@@ -36,6 +36,31 @@ model Projects {
   ImageDatasets        ImageDatasets[]
   QuestionTemplates    QuestionTemplates[]
   EvalDatasets         EvalDatasets[]
+  ProjectUserAccess    ProjectUserAccess[]
+}
+
+model Users {
+  id             String   @id @default(nanoid())
+  email          String   @unique
+  passwordHash   String
+  name           String?
+  role           String   @default("reviewer") // "admin" | "reviewer"
+  createAt       DateTime @default(now())
+  updateAt       DateTime @updatedAt
+  ProjectUserAccess ProjectUserAccess[]
+}
+
+model ProjectUserAccess {
+  id        String   @id @default(nanoid())
+  project   Projects @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  user      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  role      String   @default("reviewer")
+  createAt  DateTime @default(now())
+  @@unique([projectId, userId])
+  @@index([userId])
+  @@index([projectId])
 }
 
 model UploadFiles {

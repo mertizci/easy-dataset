@@ -82,6 +82,7 @@ export default function ProjectCard({ project, onDeleteClick }) {
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({ projectId: project.id })
       });
 
@@ -124,8 +125,10 @@ export default function ProjectCard({ project, onDeleteClick }) {
   // 处理删除点击
   const handleDeleteClick = event => {
     handleMenuClose(event);
-    onDeleteClick(event, project);
+    if (onDeleteClick) onDeleteClick(event, project);
   };
+
+  const showMenu = onDeleteClick;
 
   return (
     <Card sx={styles.projectCard(theme)}>
@@ -161,6 +164,7 @@ export default function ProjectCard({ project, onDeleteClick }) {
                   </Typography>
                 </Box>
               </Box>
+              {showMenu && (
               <IconButton
                 size="small"
                 onClick={handleMenuClick}
@@ -172,6 +176,7 @@ export default function ProjectCard({ project, onDeleteClick }) {
               >
                 <MoreVertIcon fontSize="small" />
               </IconButton>
+              )}
             </Box>
 
             {/* 描述 */}
@@ -212,6 +217,7 @@ export default function ProjectCard({ project, onDeleteClick }) {
       </Link>
 
       {/* 操作菜单 */}
+      {showMenu && (
       <Menu
         anchorEl={anchorEl}
         open={open}
@@ -247,6 +253,7 @@ export default function ProjectCard({ project, onDeleteClick }) {
           <Typography variant="body2">{t('common.delete')}</Typography>
         </MenuItem>
       </Menu>
+      )}
     </Card>
   );
 }

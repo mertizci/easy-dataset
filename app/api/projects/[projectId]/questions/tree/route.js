@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getQuestionsForTree, getQuestionsByTag } from '@/lib/db/questions';
 
 /**
@@ -9,6 +10,8 @@ import { getQuestionsForTree, getQuestionsByTag } from '@/lib/db/questions';
  */
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId } = params;
 
     // 验证项目ID

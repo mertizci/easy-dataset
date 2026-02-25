@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { evaluateDataset } from '@/lib/services/datasets/evaluation';
 
 /**
@@ -6,6 +7,8 @@ import { evaluateDataset } from '@/lib/services/datasets/evaluation';
  */
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId, datasetId } = params;
     const { model, language = 'zh-CN' } = await request.json();
 

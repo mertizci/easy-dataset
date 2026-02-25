@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { db } from '@/lib/db/index';
 import { nanoid } from 'nanoid';
 import * as XLSX from 'xlsx';
@@ -233,6 +234,8 @@ function parseJSON(content) {
  */
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const formData = await request.formData();
 

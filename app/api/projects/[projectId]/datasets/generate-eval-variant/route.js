@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getDatasetsById } from '@/lib/db/datasets';
 import LLMClient from '@/lib/llm/core/index';
 import { getEvalQuestionPrompt } from '@/lib/llm/prompts/evalQuestion';
@@ -6,6 +7,8 @@ import { extractJsonFromLLMOutput } from '@/lib/llm/common/util';
 
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId } = params;
     const { datasetId, model, language, questionType = 'open_ended', count = 1 } = await request.json();
 

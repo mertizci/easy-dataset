@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getGaPairsByFileId, toggleGaPairActive, saveGaPairs, createGaPairs } from '@/lib/db/ga-pairs';
 import { getUploadFileInfoById } from '@/lib/db/upload-files';
 import { generateGaPairs } from '@/lib/services/ga/ga-generation';
@@ -10,6 +11,8 @@ import { db } from '@/lib/db/index';
  */
 export async function POST(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId, fileId } = params;
     const { regenerate = false, appendMode = false, language = '中文' } = await request.json();
 
@@ -178,6 +181,8 @@ export async function POST(request, { params }) {
  */
 export async function GET(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params);
+    if (auth.response) return auth.response;
     const { projectId, fileId } = params;
 
     if (!projectId || !fileId) {
@@ -201,6 +206,8 @@ export async function GET(request, { params }) {
  */
 export async function PUT(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId, fileId } = params;
     const body = await request.json();
 
@@ -270,6 +277,8 @@ export async function PUT(request, { params }) {
  */
 export async function PATCH(request, { params }) {
   try {
+    const auth = await requireProjectAuth(request, params, { requireAdmin: true });
+    if (auth.response) return auth.response;
     const { projectId, fileId } = params;
     const body = await request.json();
 
