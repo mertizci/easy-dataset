@@ -36,23 +36,23 @@ function normalizeTaskModelInfo(modelInfo) {
   return parsedModelInfo;
 }
 
-// 获取任务配置
+// Get task configuration
 export async function GET(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params);
     if (auth.response) return auth.response;
     const { projectId } = params;
 
-    // 验证项目 ID
+    // Validate project ID
     if (!projectId) {
       return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
     }
 
-    // 获取项目根目录
+    // Get project root
     const projectRoot = await getProjectRoot();
     const projectPath = path.join(projectRoot, projectId);
 
-    // 检查项目是否存在
+    // Check if project exists
     try {
       await fs.access(projectPath);
     } catch (error) {
@@ -67,41 +67,41 @@ export async function GET(request, { params }) {
   }
 }
 
-// 更新任务配置
+// Update task configuration
 export async function PUT(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
     if (auth.response) return auth.response;
     const { projectId } = params;
 
-    // 验证项目 ID
+    // Validate project ID
     if (!projectId) {
       return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
     }
 
-    // 获取请求体
+    // Get request body
     const taskConfig = await request.json();
 
-    // 验证请求体
+    // Validate request body
     if (!taskConfig) {
       return NextResponse.json({ error: 'Task configuration cannot be empty' }, { status: 400 });
     }
 
-    // 获取项目根目录
+    // Get project root
     const projectRoot = await getProjectRoot();
     const projectPath = path.join(projectRoot, projectId);
 
-    // 检查项目是否存在
+    // Check if project exists
     try {
       await fs.access(projectPath);
     } catch (error) {
       return NextResponse.json({ error: 'Project does not exist' }, { status: 404 });
     }
 
-    // 获取任务配置文件路径
+    // Get task config file path
     const taskConfigPath = path.join(projectPath, 'task-config.json');
 
-    // 写入任务配置文件
+    // Write task config file
     await fs.writeFile(taskConfigPath, JSON.stringify(taskConfig, null, 2), 'utf-8');
 
     return NextResponse.json({ message: 'Task configuration updated successfully' });
@@ -111,7 +111,7 @@ export async function PUT(request, { params }) {
   }
 }
 
-// 创建新任务
+// Create new task
 export async function POST(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
@@ -119,7 +119,7 @@ export async function POST(request, { params }) {
     const { projectId } = params;
     const data = await request.json();
 
-    // 验证必填字段
+    // Validate required fields
     const { taskType, modelInfo, language, detail = '', totalCount = 0, note } = data;
 
     if (!taskType) {
@@ -132,12 +132,12 @@ export async function POST(request, { params }) {
       );
     }
 
-    // 创建新任务
+    // Create new task
     const newTask = await db.task.create({
       data: {
         projectId,
         taskType,
-        status: 0, // 初始状态: 处理中
+        status: 0, // Initial status: processing
         modelInfo: JSON.stringify(normalizeTaskModelInfo(modelInfo)),
         language: language || 'zh-CN',
         detail: detail || '',
@@ -147,7 +147,7 @@ export async function POST(request, { params }) {
       }
     });
 
-    // 异步启动任务处理
+    // Start task processing asynchronously
     processTask(newTask.id).catch(err => {
       console.error(`Task startup failed: ${newTask.id}`, String(err));
     });

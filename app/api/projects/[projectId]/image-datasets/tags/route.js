@@ -2,19 +2,19 @@ import { NextResponse } from 'next/server';
 import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getImageDatasetsTagsByProject } from '@/lib/db/imageDatasets';
 
-// 获取项目中所有已使用的标签
+// Get all tags used in project
 export async function GET(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params);
     if (auth.response) return auth.response;
     const { projectId } = params;
 
-    // 获取项目的所有数据集
+    // Get all project datasets
     const datasets = await getImageDatasetsTagsByProject(projectId);
 
     console.log('datasets', datasets);
 
-    // 提取所有标签
+    // Extract all tags
     const tagsSet = new Set();
     datasets.forEach(dataset => {
       if (dataset.tags) {
@@ -24,12 +24,12 @@ export async function GET(request, { params }) {
             tags.forEach(tag => tagsSet.add(tag));
           }
         } catch (e) {
-          // 忽略解析错误
+          // Ignore parse errors
         }
       }
     });
 
-    // 转换为数组并排序
+    // Convert to array and sort
     const tags = Array.from(tagsSet).sort();
 
     return NextResponse.json({ tags });

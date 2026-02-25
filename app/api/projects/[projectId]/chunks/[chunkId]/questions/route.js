@@ -4,27 +4,27 @@ import { getQuestionsForChunk } from '@/lib/db/questions';
 import logger from '@/lib/util/logger';
 import questionService from '@/lib/services/questions';
 
-// 为指定文本块生成问题
+// Generate questions for specified chunk
 export async function POST(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
     if (auth.response) return auth.response;
     const { projectId, chunkId } = params;
 
-    // 验证项目ID和文本块ID
+    // Validate project ID and chunk ID
     if (!projectId || !chunkId) {
       return NextResponse.json({ error: 'Project ID or text block ID cannot be empty' }, { status: 400 });
-    } // 获取请求体
-    const { model, language = '中文', number, enableGaExpansion = false } = await request.json();
+    }
+    const { model, language = 'en', number, enableGaExpansion = false } = await request.json();
 
     if (!model) {
       return NextResponse.json({ error: 'Model cannot be empty' }, { status: 400 });
     }
 
-    // 后续会根据是否有GA对来选择是否启用GA扩展选择服务函数
+    // Service will use GA expansion based on enableGaExpansion
     const serviceFunc = questionService.generateQuestionsForChunkWithGA;
 
-    // 使用问题生成服务
+    // Use question generation service
     const result = await serviceFunc(projectId, chunkId, {
       model,
       language,
@@ -32,7 +32,7 @@ export async function POST(request, { params }) {
       enableGaExpansion
     });
 
-    // 统一返回格式，确保包含GA扩展信息
+    // Unified response format with GA expansion info
     const response = {
       chunkId,
       questions: result.questions || result.labelQuestions || [],
@@ -42,7 +42,7 @@ export async function POST(request, { params }) {
       expectedTotal: result.expectedTotal || result.total
     };
 
-    // 返回生成的问题
+    // Return generated questions
     return NextResponse.json(response);
   } catch (error) {
     logger.error('Error generating questions:', error);
@@ -50,22 +50,22 @@ export async function POST(request, { params }) {
   }
 }
 
-// 获取指定文本块的问题
+// Get questions for specified chunk
 export async function GET(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params);
     if (auth.response) return auth.response;
     const { projectId, chunkId } = params;
 
-    // 验证项目ID和文本块ID
+    // Validate project ID and chunk ID
     if (!projectId || !chunkId) {
-      return NextResponse.json({ error: 'The item ID or text block ID cannot be empty' }, { status: 400 });
+      return NextResponse.json({ error: 'Project ID and Chunk ID are required' }, { status: 400 });
     }
 
-    // 获取文本块的问题
+    // Get chunk questions
     const questions = await getQuestionsForChunk(projectId, chunkId);
 
-    // 返回问题列表
+    // Return question list
     return NextResponse.json({
       chunkId,
       questions,

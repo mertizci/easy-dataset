@@ -6,7 +6,7 @@ import { db } from '@/lib/db';
 const LLMClient = require('@/lib/llm/core');
 
 /**
- * 生成问题接口：根据某个标签链路构造指定数量的问题
+ * Generate questions API: construct questions by tag path
  */
 export async function POST(request, { params }) {
   try {
@@ -14,19 +14,19 @@ export async function POST(request, { params }) {
     if (auth.response) return auth.response;
     const { projectId } = params;
 
-    // 验证项目ID
+    // Validate project ID
     if (!projectId) {
-      return NextResponse.json({ error: '项目ID不能为空' }, { status: 400 });
+      return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
     }
 
     const { tagPath, currentTag, tagId, count = 5, model, language = 'zh' } = await request.json();
 
     if (!currentTag || !tagPath) {
-      const errorMsg = language === 'en' ? 'Tag information cannot be empty' : '标签信息不能为空';
+      const errorMsg = language === 'en' ? 'Tag information cannot be empty' : 'Tag information is required';
       return NextResponse.json({ error: errorMsg }, { status: 400 });
     }
 
-    // 首先获取或创建蒸馏文本块
+    // Get or create distill chunk first
     let distillChunk = await db.chunks.findFirst({
       where: {
         projectId,
@@ -35,7 +35,7 @@ export async function POST(request, { params }) {
     });
 
     if (!distillChunk) {
-      // 创建一个特殊的蒸馏文本块
+      // Create a special distill chunk
       distillChunk = await db.chunks.create({
         data: {
           name: 'Distilled Content',
@@ -50,12 +50,12 @@ export async function POST(request, { params }) {
       });
     }
 
-    // 获取已有的问题，避免重复
+    // Get existing questions to avoid duplicates
     const existingQuestions = await db.questions.findMany({
       where: {
         projectId,
         label: currentTag,
-        chunkId: distillChunk.id // 使用蒸馏文本块的 ID
+        chunkId: distillChunk.id // Use distill chunk ID
       },
       select: { question: true }
     });
@@ -74,15 +74,15 @@ export async function POST(request, { params }) {
     try {
       questions = JSON.parse(answer);
     } catch (error) {
-      console.error('解析问题JSON失败:', String(error));
-      // 尝试使用正则表达式提取问题
+      console.error('Failed to parse question JSON:', String(error));
+      // Try to extract questions with regex
       const matches = answer.match(/"([^"]+)"/g);
       if (matches) {
         questions = matches.map(match => match.replace(/"/g, ''));
       }
     }
 
-    // 保存问题到数据库
+    // Save questions to database
     const savedQuestions = [];
     for (const questionText of questions) {
       const question = await db.questions.create({
@@ -98,7 +98,7 @@ export async function POST(request, { params }) {
 
     return NextResponse.json(savedQuestions);
   } catch (error) {
-    console.error('生成问题失败:', String(error));
-    return NextResponse.json({ error: error.message || '生成问题失败' }, { status: 500 });
+    console.error('Failed to generate questions:', String(error));
+    return NextResponse.json({ error: error.message || 'Failed to generate questions' }, { status: 500 });
   }
 }

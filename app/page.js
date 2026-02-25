@@ -45,7 +45,7 @@ export default function Home() {
     async function fetchProjects() {
       try {
         setLoading(true);
-        // 获取用户创建的项目详情
+        // Fetch user's projects
         const response = await fetch('/api/projects', { credentials: 'include' });
 
         if (!response.ok) {
@@ -55,7 +55,7 @@ export default function Home() {
         const data = await response.json();
         setProjects(data);
 
-        // 检查是否有未迁移的项目
+        // Check for unmigrated projects
         await checkUnmigratedProjects();
       } catch (error) {
         console.error(t('projects.fetchError'), String(error));
@@ -65,13 +65,13 @@ export default function Home() {
       }
     }
 
-    // 检查未迁移的项目
+    // Check unmigrated projects
     async function checkUnmigratedProjects() {
       try {
         const response = await fetch('/api/projects/unmigrated', { credentials: 'include' });
 
         if (!response.ok) {
-          console.error('检查未迁移项目失败');
+          console.error('Failed to check unmigrated projects');
           return;
         }
 
@@ -82,7 +82,7 @@ export default function Home() {
           setMigrationDialogOpen(true);
         }
       } catch (error) {
-        console.error('检查未迁移项目出错', error);
+        console.error('Error checking unmigrated projects', error);
       }
     }
 
@@ -167,7 +167,7 @@ export default function Home() {
 
       <CreateProjectDialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} />
 
-      {/* 项目迁移对话框 */}
+      {/* Project migration dialog */}
       <MigrationDialog
         open={migrationDialogOpen}
         onClose={() => setMigrationDialogOpen(false)}

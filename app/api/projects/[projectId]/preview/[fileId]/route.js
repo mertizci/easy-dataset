@@ -5,30 +5,30 @@ import path from 'path';
 import { getProjectRoot } from '@/lib/db/base';
 import { getUploadFileInfoById } from '@/lib/db/upload-files';
 
-// 获取文件内容
+// Get file content
 export async function GET(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params);
     if (auth.response) return auth.response;
     const { projectId, fileId } = params;
 
-    // 验证参数
+    // Validate params
     if (!projectId) {
       return NextResponse.json({ error: 'Project ID cannot be empty' }, { status: 400 });
     }
 
-    // 获取项目根目录
+    // Get file info
     let fileInfo = await getUploadFileInfoById(fileId);
     if (!fileInfo) {
       return NextResponse.json({ error: 'file does not exist' }, { status: 400 });
     }
 
-    // 获取文件路径
+    // Get file path
     let filePath = path.join(fileInfo.path, fileInfo.fileName);
     if (fileInfo.fileExt !== '.md') {
       filePath = path.join(fileInfo.path, fileInfo.fileName.replace(/\.[^/.]+$/, '.md'));
     }
-    //获取文件
+    // Read file
     const buffer = fs.readFileSync(filePath);
 
     const text = buffer.toString('utf-8');

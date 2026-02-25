@@ -3,7 +3,7 @@ import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getImageDatasetsForExport } from '@/lib/db/imageDatasets';
 
 /**
- * 导出图像数据集
+ * Export image dataset
  */
 export async function POST(request, { params }) {
   try {
@@ -12,14 +12,14 @@ export async function POST(request, { params }) {
     const { projectId } = params;
     const body = await request.json();
 
-    // 验证项目ID
+    // Validate project ID
     if (!projectId) {
       return NextResponse.json({ error: 'Project ID cannot be empty' }, { status: 400 });
     }
 
     const confirmedOnly = body.confirmedOnly || false;
 
-    // 获取数据集
+    // Get datasets
     const datasets = await getImageDatasetsForExport(projectId, confirmedOnly);
 
     return NextResponse.json(datasets);

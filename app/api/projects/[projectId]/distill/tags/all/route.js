@@ -3,7 +3,7 @@ import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { db } from '@/lib/db';
 
 /**
- * 获取项目的所有蒸馏标签
+ * Get all distill tags for the project
  */
 export async function GET(request, { params }) {
   try {
@@ -11,12 +11,12 @@ export async function GET(request, { params }) {
     if (auth.response) return auth.response;
     const { projectId } = params;
 
-    // 验证项目ID
+    // Validate project ID
     if (!projectId) {
-      return NextResponse.json({ error: '项目ID不能为空' }, { status: 400 });
+      return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
     }
 
-    // 获取所有标签
+    // Get all tags
     const tags = await db.tags.findMany({
       where: {
         projectId
@@ -28,7 +28,7 @@ export async function GET(request, { params }) {
 
     return NextResponse.json(tags);
   } catch (error) {
-    console.error('获取蒸馏标签失败:', String(error));
-    return NextResponse.json({ error: error.message || '获取蒸馏标签失败' }, { status: 500 });
+    console.error('Failed to get distill tags:', String(error));
+    return NextResponse.json({ error: error.message || 'Failed to get distill tags' }, { status: 500 });
   }
 }

@@ -1,5 +1,5 @@
 /**
- * 单个多轮对话数据集操作API
+ * Single multi-turn conversation dataset operations API
  */
 
 import { NextResponse } from 'next/server';
@@ -12,7 +12,7 @@ import {
 import { requireAuth, requireProjectAccess, isRatingOnlyUser } from '@/lib/auth/apiGuard';
 
 /**
- * 获取单个多轮对话数据集详情
+ * Get single multi-turn conversation dataset details
  */
 export async function GET(request, { params }) {
   try {
@@ -25,7 +25,7 @@ export async function GET(request, { params }) {
     const { searchParams } = new URL(request.url);
     const operateType = searchParams.get('operateType');
 
-    // 如果是导航操作，返回导航项
+    // If navigation operation, return navigation items
     if (operateType !== null) {
       const data = await getConversationNavigationItems(projectId, conversationId, operateType);
       return NextResponse.json(data);
@@ -37,7 +37,7 @@ export async function GET(request, { params }) {
       return NextResponse.json(
         {
           success: false,
-          message: '对话数据集不存在'
+          message: 'Conversation dataset not found'
         },
         { status: 404 }
       );
@@ -47,7 +47,7 @@ export async function GET(request, { params }) {
       return NextResponse.json(
         {
           success: false,
-          message: '对话数据集不属于指定项目'
+          message: 'Conversation dataset does not belong to the specified project'
         },
         { status: 403 }
       );
@@ -55,7 +55,7 @@ export async function GET(request, { params }) {
 
     return NextResponse.json(conversation);
   } catch (error) {
-    console.error('获取多轮对话数据集详情失败:', error);
+    console.error('Failed to get conversation dataset details:', error);
     return NextResponse.json(
       {
         success: false,
@@ -67,8 +67,8 @@ export async function GET(request, { params }) {
 }
 
 /**
- * 更新多轮对话数据集
- * Reviewer: 仅允许更新 score
+ * Update multi-turn conversation dataset
+ * Reviewer: only score updates allowed
  */
 export async function PUT(request, { params }) {
   try {
@@ -81,14 +81,14 @@ export async function PUT(request, { params }) {
 
     const body = await request.json();
 
-    // 验证对话数据集是否存在且属于项目
+    // Verify conversation dataset exists and belongs to project
     const conversation = await getDatasetConversationById(conversationId);
 
     if (!conversation) {
       return NextResponse.json(
         {
           success: false,
-          message: '对话数据集不存在'
+          message: 'Conversation dataset not found'
         },
         { status: 404 }
       );
@@ -98,13 +98,13 @@ export async function PUT(request, { params }) {
       return NextResponse.json(
         {
           success: false,
-          message: '对话数据集不属于指定项目'
+          message: 'Conversation dataset does not belong to the specified project'
         },
         { status: 403 }
       );
     }
 
-    // Reviewer: 仅允许更新 score
+    // Reviewer: only score updates allowed
     const ratingOnly = await isRatingOnlyUser(session.userId, projectId);
     const allowedFields = ratingOnly
       ? ['score']
@@ -114,7 +114,7 @@ export async function PUT(request, { params }) {
     allowedFields.forEach(field => {
       if (body.hasOwnProperty(field)) {
         if (field === 'messages') {
-          // 将messages数组转换为rawMessages字符串存储
+          // Convert messages array to rawMessages string for storage
           updateData['rawMessages'] = JSON.stringify(body[field]);
         } else {
           updateData[field] = body[field];
@@ -126,7 +126,7 @@ export async function PUT(request, { params }) {
       return NextResponse.json(
         {
           success: false,
-          message: '没有有效的更新字段'
+          message: 'No valid update fields'
         },
         { status: 400 }
       );
@@ -139,7 +139,7 @@ export async function PUT(request, { params }) {
       data: updatedConversation
     });
   } catch (error) {
-    console.error('更新多轮对话数据集失败:', error);
+    console.error('Failed to update conversation dataset:', error);
     return NextResponse.json(
       {
         success: false,
@@ -151,7 +151,7 @@ export async function PUT(request, { params }) {
 }
 
 /**
- * 删除多轮对话数据集（仅 admin）
+ * Delete multi-turn conversation dataset (admin only)
  */
 export async function DELETE(request, { params }) {
   try {
@@ -163,14 +163,14 @@ export async function DELETE(request, { params }) {
 
     const { projectId, conversationId } = params;
 
-    // 验证对话数据集是否存在且属于项目
+    // Verify conversation dataset exists and belongs to project
     const conversation = await getDatasetConversationById(conversationId);
 
     if (!conversation) {
       return NextResponse.json(
         {
           success: false,
-          message: '对话数据集不存在'
+          message: 'Conversation dataset not found'
         },
         { status: 404 }
       );
@@ -180,7 +180,7 @@ export async function DELETE(request, { params }) {
       return NextResponse.json(
         {
           success: false,
-          message: '对话数据集不属于指定项目'
+          message: 'Conversation dataset does not belong to the specified project'
         },
         { status: 403 }
       );
@@ -190,10 +190,10 @@ export async function DELETE(request, { params }) {
 
     return NextResponse.json({
       success: true,
-      message: '删除成功'
+      message: 'Deleted successfully'
     });
   } catch (error) {
-    console.error('删除多轮对话数据集失败:', error);
+    console.error('Failed to delete conversation dataset:', error);
     return NextResponse.json(
       {
         success: false,

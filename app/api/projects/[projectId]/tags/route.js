@@ -3,41 +3,41 @@ import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getTags, createTag, updateTag, deleteTag } from '@/lib/db/tags';
 import { getQuestionsByTagName } from '@/lib/db/questions';
 
-// 获取项目的标签树
+// Get project tag tree
 export async function GET(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params);
     if (auth.response) return auth.response;
     const { projectId } = params;
 
-    // 验证项目ID
+    // Validate project ID
     if (!projectId) {
       return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
     }
 
-    // 获取标签树
+    // Get tag tree
     const tags = await getTags(projectId);
 
     return NextResponse.json({ tags });
   } catch (error) {
-    console.error('Failed to obtain the label tree:', String(error));
-    return NextResponse.json({ error: error.message || 'Failed to obtain the label tree' }, { status: 500 });
+    console.error('Failed to get tag tree:', String(error));
+    return NextResponse.json({ error: error.message || 'Failed to get tag tree' }, { status: 500 });
   }
 }
 
-// 更新项目的标签树
+// Update project tag tree
 export async function PUT(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
     if (auth.response) return auth.response;
     const { projectId } = params;
 
-    // 验证项目ID
+    // Validate project ID
     if (!projectId) {
       return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
     }
 
-    // 获取请求体
+    // Get request body
     const { tags } = await request.json();
     if (tags.id === undefined || tags.id === null || tags.id === '') {
       console.log('createTag', tags);
@@ -59,7 +59,7 @@ export async function POST(request, { params }) {
     if (auth.response) return auth.response;
     const { projectId } = params;
 
-    // 验证项目ID
+    // Validate project ID
     if (!projectId) {
       return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
     }
@@ -69,8 +69,8 @@ export async function POST(request, { params }) {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Failed to obtain the label tree:', String(error));
-    return NextResponse.json({ error: error.message || 'Failed to obtain the label tree' }, { status: 500 });
+    console.error('Failed to get tag tree:', String(error));
+    return NextResponse.json({ error: error.message || 'Failed to get tag tree' }, { status: 500 });
   }
 }
 
@@ -80,29 +80,29 @@ export async function DELETE(request, { params }) {
     if (auth.response) return auth.response;
     const { projectId } = params;
 
-    // 验证项目ID
+    // Validate project ID
     if (!projectId) {
       return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
     }
 
-    // 获取要删除的标签ID
+    // Get tag ID to delete
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
     if (!id) {
-      return NextResponse.json({ error: '标签 ID 是必需的' }, { status: 400 });
+      return NextResponse.json({ error: 'Tag ID is required' }, { status: 400 });
     }
 
-    console.log(`正在删除标签: ${id}`);
+    console.log(`Deleting tag: ${id}`);
     const result = await deleteTag(id);
-    console.log(`删除标签成功: ${id}`);
+    console.log(`Tag deleted successfully: ${id}`);
 
-    return NextResponse.json({ success: true, message: '删除标签成功', data: result });
+    return NextResponse.json({ success: true, message: 'Tag deleted successfully', data: result });
   } catch (error) {
-    console.error('删除标签失败:', String(error));
+    console.error('Failed to delete tag:', String(error));
     return NextResponse.json(
       {
-        error: error.message || '删除标签失败',
+        error: error.message || 'Failed to delete tag',
         success: false
       },
       { status: 500 }

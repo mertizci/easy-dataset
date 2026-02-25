@@ -21,19 +21,19 @@ export default function ProjectList({ projects, onCreateProject, isAdmin = true 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState(null);
   const [loading, setLoading] = useState(false);
-  // 打开删除确认对话框
+  // Open delete confirmation dialog
   const handleOpenDeleteDialog = (event, project) => {
     setProjectToDelete(project);
     setDeleteDialogOpen(true);
   };
 
-  // 关闭删除确认对话框
+  // Close delete confirmation dialog
   const handleCloseDeleteDialog = () => {
     setDeleteDialogOpen(false);
     setProjectToDelete(null);
   };
 
-  // 删除项目
+  // Delete project
   const handleDeleteProject = async () => {
     if (!projectToDelete) return;
 
@@ -49,10 +49,10 @@ export default function ProjectList({ projects, onCreateProject, isAdmin = true 
         throw new Error(errorData.error || t('projects.deleteFailed'));
       }
 
-      // 刷新页面以更新项目列表
+      // Reload page to refresh project list
       window.location.reload();
     } catch (error) {
-      console.error('删除项目失败:', error);
+      console.error('Failed to delete project:', error);
       alert(error.message || t('projects.deleteFailed'));
     } finally {
       setLoading(false);
@@ -88,7 +88,7 @@ export default function ProjectList({ projects, onCreateProject, isAdmin = true 
         )}
       </Grid>
 
-      {/* 删除确认对话框 */}
+      {/* Delete confirmation dialog */}
       <Dialog
         open={deleteDialogOpen}
         onClose={handleCloseDeleteDialog}

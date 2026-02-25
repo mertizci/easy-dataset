@@ -7,14 +7,14 @@ import { useTranslation } from 'react-i18next';
 import { useAtomValue } from 'jotai';
 import { authAtom } from '@/lib/store';
 
-// 导入设置组件
+// Import settings components
 import BasicSettings from '@/components/settings/BasicSettings';
 import ModelSettings from '@/components/settings/ModelSettings';
 import TaskSettings from '@/components/settings/TaskSettings';
 import PromptSettings from './components/PromptSettings';
 import UserAccessSettings from './components/UserAccessSettings';
 
-// 定义 TAB 枚举
+// Tab enum
 const TABS = {
   BASIC: 'basic',
   MODEL: 'model',
@@ -35,7 +35,7 @@ export default function SettingsPage({ params }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 从 URL hash 中获取当前 tab
+  // Get current tab from URL
   useEffect(() => {
     const tab = searchParams.get('tab');
     if (tab && Object.values(TABS).includes(tab)) {
@@ -43,7 +43,7 @@ export default function SettingsPage({ params }) {
     }
   }, [searchParams]);
 
-  // 检查项目是否存在
+  // Check if project exists
   useEffect(() => {
     async function checkProject() {
       try {
@@ -60,7 +60,7 @@ export default function SettingsPage({ params }) {
           setProjectExists(true);
         }
       } catch (error) {
-        console.error('获取项目详情出错:', error);
+        console.error('Failed to fetch project details:', error);
         setError(error.message);
       } finally {
         setLoading(false);
@@ -70,10 +70,10 @@ export default function SettingsPage({ params }) {
     checkProject();
   }, [projectId, t]);
 
-  // 处理 tab 切换
+  // Handle tab change
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
-    // 更新 URL hash
+    // Update URL
     router.push(`/projects/${projectId}/settings?tab=${newValue}`);
   };
 

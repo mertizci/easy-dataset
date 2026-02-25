@@ -3,7 +3,7 @@ import { getUploadFileInfoById } from '@/lib/db/upload-files';
 import { createGaPairs, getGaPairsByFileId } from '@/lib/db/ga-pairs';
 
 /**
- * 批量手动添加 GA 对到多个文件
+ * Batch manually add GA pairs to multiple files
  */
 export async function POST(request, { params }) {
   try {
@@ -24,37 +24,37 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'GA pair with genreTitle and audienceTitle is required' }, { status: 400 });
     }
 
-    console.log('开始处理批量手动添加GA对请求');
-    console.log('项目ID:', projectId);
-    console.log('请求的文件IDs:', fileIds);
-    console.log('GA对:', gaPair);
+    console.log('Processing batch manual add GA pairs request');
+    console.log('Project ID:', projectId);
+    console.log('Requested file IDs:', fileIds);
+    console.log('GA pair:', gaPair);
 
-    // 使用 getUploadFileInfoById 逐个验证文件
+    // Validate files one by one using getUploadFileInfoById
     const validFiles = [];
     const invalidFileIds = [];
 
     for (const fileId of fileIds) {
       try {
-        console.log(`正在验证文件: ${fileId}`);
+        console.log(`Validating file: ${fileId}`);
         const fileInfo = await getUploadFileInfoById(fileId);
 
         if (fileInfo && fileInfo.projectId === projectId) {
-          console.log(`文件验证成功: ${fileInfo.fileName}`);
+          console.log(`File validated: ${fileInfo.fileName}`);
           validFiles.push(fileInfo);
         } else if (fileInfo) {
-          console.log(`文件属于其他项目: ${fileInfo.projectId} != ${projectId}`);
+          console.log(`File belongs to another project: ${fileInfo.projectId} != ${projectId}`);
           invalidFileIds.push(fileId);
         } else {
-          console.log(`文件不存在: ${fileId}`);
+          console.log(`File not found: ${fileId}`);
           invalidFileIds.push(fileId);
         }
       } catch (error) {
-        console.error(`验证文件 ${fileId} 时出错:`, String(error));
+        console.error(`Error validating file ${fileId}:`, String(error));
         invalidFileIds.push(fileId);
       }
     }
 
-    console.log(`文件验证完成: 有效${validFiles.length}个, 无效${invalidFileIds.length}个`);
+    console.log(`File validation complete: ${validFiles.length} valid, ${invalidFileIds.length} invalid`);
 
     if (validFiles.length === 0) {
       return NextResponse.json(
@@ -71,25 +71,25 @@ export async function POST(request, { params }) {
       );
     }
 
-    // 批量手动添加 GA 对
-    console.log('开始批量手动添加GA对...');
-    console.log('追加模式:', appendMode);
+    // Batch manually add GA pairs
+    console.log('Starting batch manual add GA pairs...');
+    console.log('Append mode:', appendMode);
     const results = [];
 
     for (const file of validFiles) {
       try {
-        console.log(`处理文件: ${file.fileName}`);
+        console.log(`Processing file: ${file.fileName}`);
 
-        // 检查是否已存在 GA 对
+        // Check if GA pairs already exist
         const existingPairs = await getGaPairsByFileId(file.id);
 
         let pairNumber = 1;
         if (appendMode && existingPairs && existingPairs.length > 0) {
-          // 追加模式：在现有 GA 对后面添加
+          // Append mode: add after existing GA pairs
           pairNumber = existingPairs.length + 1;
         } else if (!appendMode && existingPairs && existingPairs.length > 0) {
-          // 非追加模式：如果已存在 GA 对则跳过
-          console.log(`文件 ${file.fileName} 已存在GA对，跳过`);
+          // Non-append mode: skip if GA pairs already exist
+          console.log(`File ${file.fileName} already has GA pairs, skipping`);
           results.push({
             fileId: file.id,
             fileName: file.fileName,
@@ -100,7 +100,7 @@ export async function POST(request, { params }) {
           continue;
         }
 
-        // 创建 GA 对数据
+        // Create GA pair data
         const gaPairData = [
           {
             projectId,
@@ -114,12 +114,12 @@ export async function POST(request, { params }) {
           }
         ];
 
-        // 保存 GA 对
+        // Save GA pairs
         if (appendMode) {
-          // 追加模式：只创建新的 GA 对
+          // Append mode: only create new GA pairs
           await createGaPairs(gaPairData);
         } else {
-          // 非追加模式：使用 saveGaPairs 替换现有的
+          // Non-append mode: use saveGaPairs to replace existing
           const { saveGaPairs } = await import('@/lib/db/ga-pairs');
           await saveGaPairs(projectId, file.id, [
             {
@@ -137,9 +137,9 @@ export async function POST(request, { params }) {
           message: 'GA pair added successfully'
         });
 
-        console.log(`成功为文件 ${file.fileName} 添加GA对`);
+        console.log(`GA pair added successfully for file ${file.fileName}`);
       } catch (error) {
-        console.error(`为文件 ${file.fileName} 添加GA对失败:`, error);
+        console.error(`Failed to add GA pair for file ${file.fileName}:`, error);
         results.push({
           fileId: file.id,
           fileName: file.fileName,
@@ -151,11 +151,11 @@ export async function POST(request, { params }) {
       }
     }
 
-    // 统计结果
+    // Count results
     const successCount = results.filter(r => r.success).length;
     const failureCount = results.filter(r => !r.success).length;
 
-    console.log(`批量手动添加完成: 成功${successCount}个, 失败${failureCount}个`);
+    console.log(`Batch manual add complete: ${successCount} succeeded, ${failureCount} failed`);
 
     return NextResponse.json({
       success: true,

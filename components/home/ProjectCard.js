@@ -27,12 +27,12 @@ import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 
 /**
- * 统计项组件
+ * Stat item component
  */
 const StatItem = ({ icon: Icon, count, label, color, isToken }) => {
   const theme = useTheme();
 
-  // 格式化数字
+  // Format number
   const displayCount = isToken ? (count || 0).toLocaleString() : count || 0;
 
   return (
@@ -53,21 +53,21 @@ const StatItem = ({ icon: Icon, count, label, color, isToken }) => {
 };
 
 /**
- * 项目卡片组件
- * @param {Object} props - 组件属性
- * @param {Object} props.project - 项目数据
- * @param {Function} props.onDeleteClick - 删除按钮点击事件处理函数
+ * Project card component
+ * @param {Object} props - Component props
+ * @param {Object} props.project - Project data
+ * @param {Function} props.onDeleteClick - Delete button click handler
  */
 export default function ProjectCard({ project, onDeleteClick }) {
   const { t } = useTranslation();
   const theme = useTheme();
   const [processingId, setProcessingId] = useState(false);
 
-  // 菜单状态
+  // Menu state
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
-  // 打开项目目录
+  // Open project directory
   const handleOpenDirectory = async event => {
     event.stopPropagation();
     event.preventDefault();
@@ -91,23 +91,23 @@ export default function ProjectCard({ project, onDeleteClick }) {
         throw new Error(data.error || t('migration.openDirectoryFailed'));
       }
 
-      // 成功打开目录，不需要特别处理
+      // Successfully opened directory, no special handling needed
     } catch (error) {
-      console.error('打开目录错误:', error);
+      console.error('Error opening directory:', error);
       alert(error.message);
     } finally {
       setProcessingId(false);
     }
   };
 
-  // 处理菜单打开
+  // Handle menu open
   const handleMenuClick = event => {
     event.stopPropagation();
     event.preventDefault();
     setAnchorEl(event.currentTarget);
   };
 
-  // 处理菜单关闭
+  // Handle menu close
   const handleMenuClose = event => {
     if (event) {
       event.stopPropagation();
@@ -116,13 +116,13 @@ export default function ProjectCard({ project, onDeleteClick }) {
     setAnchorEl(null);
   };
 
-  // 处理打开目录点击
+  // Handle open directory click
   const handleOpenDirectoryClick = event => {
     handleMenuClose(event);
     handleOpenDirectory(event);
   };
 
-  // 处理删除点击
+  // Handle delete click
   const handleDeleteClick = event => {
     handleMenuClose(event);
     if (onDeleteClick) onDeleteClick(event, project);
@@ -139,7 +139,7 @@ export default function ProjectCard({ project, onDeleteClick }) {
       >
         <CardActionArea component="div" sx={{ height: '100%' }}>
           <CardContent sx={styles.projectCardContent}>
-            {/* 头部：Avatar + Title + Menu */}
+            {/* Header: Avatar + Title + Menu */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
               <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', overflow: 'hidden', flex: 1 }}>
                 <Avatar
@@ -179,12 +179,12 @@ export default function ProjectCard({ project, onDeleteClick }) {
               )}
             </Box>
 
-            {/* 描述 */}
+            {/* Description */}
             <Typography variant="body2" sx={styles.projectDescription}>
-              {project.description || t('projects.noDescription', { defaultValue: '暂无描述' })}
+              {project.description || t('projects.noDescription')}
             </Typography>
 
-            {/* 统计数据 */}
+            {/* Stats */}
             <Box sx={styles.statsContainer}>
               <StatItem
                 icon={QuizIcon}
@@ -216,7 +216,7 @@ export default function ProjectCard({ project, onDeleteClick }) {
         </CardActionArea>
       </Link>
 
-      {/* 操作菜单 */}
+      {/* Actions menu */}
       {showMenu && (
       <Menu
         anchorEl={anchorEl}

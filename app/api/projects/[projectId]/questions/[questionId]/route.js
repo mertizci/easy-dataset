@@ -2,14 +2,14 @@ import { NextResponse } from 'next/server';
 import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { deleteQuestion } from '@/lib/db/questions';
 
-// 删除单个问题
+// Delete single question
 export async function DELETE(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
     if (auth.response) return auth.response;
     const { projectId, questionId } = params;
 
-    // 验证参数
+    // Validate params
     if (!projectId) {
       return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
     }
@@ -18,7 +18,7 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: 'Question ID is required' }, { status: 400 });
     }
 
-    // 删除问题
+    // Delete question
     await deleteQuestion(questionId);
 
     return NextResponse.json({ success: true, message: 'Delete successful' });

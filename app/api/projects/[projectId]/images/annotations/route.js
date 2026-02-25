@@ -6,7 +6,7 @@ import { createImageDataset } from '@/lib/db/imageDatasets';
 
 const prisma = new PrismaClient();
 
-// 创建标注
+// Create annotation
 export async function POST(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
@@ -14,39 +14,39 @@ export async function POST(request, { params }) {
     const { projectId } = params;
     const { imageId, questionId, question, answerType, answer, note } = await request.json();
 
-    // 验证必填字段
+    // Validate required fields
     if (!imageId || !question || !answerType || answer === undefined || answer === null) {
-      return NextResponse.json({ error: '缺少必要参数：imageId, question, answerType, answer' }, { status: 400 });
+      return NextResponse.json({ error: 'Required parameters missing: imageId, question, answerType, answer' }, { status: 400 });
     }
 
-    // 验证图片存在
+    // Validate image exists
     const image = await getImageById(imageId);
     if (!image || image.projectId !== projectId) {
-      return NextResponse.json({ error: '图片不存在' }, { status: 404 });
+      return NextResponse.json({ error: 'Image not found' }, { status: 404 });
     }
 
-    // 验证答案类型
+    // Validate answer type
     if (!['text', 'label', 'custom_format'].includes(answerType)) {
-      return NextResponse.json({ error: '无效的答案类型' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid answer type' }, { status: 400 });
     }
 
-    // 验证答案内容
+    // Validate answer content
     if (answerType === 'text' && typeof answer !== 'string') {
-      return NextResponse.json({ error: '文本类型答案必须是字符串' }, { status: 400 });
+      return NextResponse.json({ error: 'Text answer must be a string' }, { status: 400 });
     }
     if (answerType === 'label' && !Array.isArray(answer)) {
-      return NextResponse.json({ error: '标签类型答案必须是数组' }, { status: 400 });
+      return NextResponse.json({ error: 'Label answer must be an array' }, { status: 400 });
     }
 
-    // 序列化答案
+    // Serialize answer
     let answerString = answer;
     if (answerType !== 'text' && typeof answerString !== 'string') {
       answerString = JSON.stringify(answer, null, 2);
     }
 
-    // 1. 获取问题记录（前端传递的 questionId 指向已有的问题）
+    // 1. Get question record (questionId from frontend points to existing question)
     if (!questionId) {
-      return NextResponse.json({ error: '缺少必要参数：questionId' }, { status: 400 });
+      return NextResponse.json({ error: 'Required parameter missing: questionId' }, { status: 400 });
     }
 
     const questionRecord = await prisma.questions.findUnique({
@@ -54,21 +54,21 @@ export async function POST(request, { params }) {
     });
 
     if (!questionRecord) {
-      return NextResponse.json({ error: '问题不存在' }, { status: 404 });
+      return NextResponse.json({ error: 'Question not found' }, { status: 404 });
     }
 
-    // 验证问题属于该图片
+    // Validate question belongs to this image
     if (questionRecord.imageId !== imageId) {
-      return NextResponse.json({ error: '问题不属于该图片' }, { status: 400 });
+      return NextResponse.json({ error: 'Question does not belong to this image' }, { status: 400 });
     }
 
-    // 2. 更新问题为已回答
+    // 2. Update question as answered
     await prisma.questions.update({
       where: { id: questionRecord.id },
       data: { answered: true }
     });
 
-    // 3. 创建 ImageDataset 记录
+    // 3. Create ImageDataset record
     const dataset = await createImageDataset(projectId, {
       imageId: image.id,
       imageName: image.imageName,

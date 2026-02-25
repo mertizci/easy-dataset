@@ -4,7 +4,7 @@ import { getDatasetsById } from '@/lib/db/datasets';
 import { getEncoding } from '@langchain/core/utils/tiktoken';
 
 /**
- * 异步计算数据集文本的Token数量
+ * Async compute token count for dataset text
  */
 export async function GET(request, { params }) {
   try {
@@ -13,7 +13,7 @@ export async function GET(request, { params }) {
     const { projectId, datasetId } = params;
 
     if (!datasetId) {
-      return NextResponse.json({ error: '数据集ID不能为空' }, { status: 400 });
+      return NextResponse.json({ error: 'Dataset ID is required' }, { status: 400 });
     }
 
     const datasets = await getDatasetsById(datasetId);
@@ -24,7 +24,7 @@ export async function GET(request, { params }) {
 
     try {
       if (datasets.answer || datasets.cot) {
-        // 使用 cl100k_base 编码，适用于 gpt-3.5-turbo 和 gpt-4
+        // Use cl100k_base encoding (gpt-3.5-turbo, gpt-4)
         const encoding = await getEncoding('cl100k_base');
 
         if (datasets.answer) {
@@ -38,16 +38,16 @@ export async function GET(request, { params }) {
         }
       }
     } catch (error) {
-      console.error('计算Token数量失败:', String(error));
-      return NextResponse.json({ error: '计算Token数量失败' }, { status: 500 });
+      console.error('Failed to compute token count:', String(error));
+      return NextResponse.json({ error: 'Failed to compute token count' }, { status: 500 });
     }
 
     return NextResponse.json(tokenCounts);
   } catch (error) {
-    console.error('获取Token计数失败:', String(error));
+    console.error('Failed to get token count:', String(error));
     return NextResponse.json(
       {
-        error: error.message || '获取Token计数失败'
+        error: error.message || 'Failed to get token count'
       },
       { status: 500 }
     );

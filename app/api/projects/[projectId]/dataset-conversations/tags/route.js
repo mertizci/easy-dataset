@@ -3,7 +3,7 @@ import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getAllDatasetConversations } from '@/lib/db/dataset-conversations';
 
 /**
- * 获取项目中多轮对话数据集的所有标签
+ * Get all tags from project conversation datasets
  */
 export async function GET(request, { params }) {
   try {
@@ -12,13 +12,13 @@ export async function GET(request, { params }) {
     const { projectId } = params;
 
     if (!projectId) {
-      return NextResponse.json({ error: '项目ID不能为空' }, { status: 400 });
+      return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
     }
 
-    // 获取项目所有对话数据集
+    // Fetch all project conversation datasets
     const conversations = await getAllDatasetConversations(projectId);
 
-    // 提取所有标签
+    // Extract all tags
     const allTags = new Set();
 
     conversations.forEach(conversation => {
@@ -33,7 +33,7 @@ export async function GET(request, { params }) {
       tags: Array.from(allTags).sort()
     });
   } catch (error) {
-    console.error('获取对话标签失败:', error);
+    console.error('Failed to fetch conversation tags:', error);
     return NextResponse.json(
       {
         success: false,

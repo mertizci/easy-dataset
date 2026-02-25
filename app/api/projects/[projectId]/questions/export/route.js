@@ -11,11 +11,11 @@ export async function POST(request, { params }) {
 
     let questions;
 
-    // 如果有选中的问题 ID，按 ID 获取
+    // If selected question IDs provided, fetch by IDs
     if (selectedIds && selectedIds.length > 0) {
       questions = await getQuestionsByIds(projectId, selectedIds);
     } else {
-      // 否则获取全部问题（不限分页）
+      // Otherwise fetch all questions (no pagination)
       questions = await getAllQuestions(
         projectId,
         filters?.searchTerm || '',
@@ -24,7 +24,7 @@ export async function POST(request, { params }) {
       );
     }
 
-    // 固定导出字段：问题内容、文本块名称、问题标签
+    // Fixed export fields: question content, chunk name, question label
     const filteredQuestions = questions.map(q => ({
       question: q.question,
       chunkName: q.chunk?.name || q.chunkName || '',
@@ -38,7 +38,7 @@ export async function POST(request, { params }) {
   }
 }
 
-// 获取全部问题（不限分页）
+// Fetch all questions (no pagination)
 async function getAllQuestions(projectId, searchTerm = '', chunkName = '', sourceType = 'all') {
   const { db } = await import('@/lib/db/index');
 
@@ -46,19 +46,19 @@ async function getAllQuestions(projectId, searchTerm = '', chunkName = '', sourc
     projectId
   };
 
-  // 搜索条件
+  // Search conditions
   if (searchTerm) {
     whereClause.OR = [{ question: { contains: searchTerm } }, { questionLabel: { contains: searchTerm } }];
   }
 
-  // 文本块名称筛选
+  // Chunk name filter
   if (chunkName) {
     whereClause.chunk = {
       name: { contains: chunkName }
     };
   }
 
-  // 数据源类型筛选
+  // Source type filter
   if (sourceType === 'text') {
     whereClause.imageName = null;
   } else if (sourceType === 'image') {
@@ -80,7 +80,7 @@ async function getAllQuestions(projectId, searchTerm = '', chunkName = '', sourc
   });
 }
 
-// 根据 ID 列表获取问题
+// Fetch questions by ID list
 async function getQuestionsByIds(projectId, questionIds) {
   const { db } = await import('@/lib/db/index');
 

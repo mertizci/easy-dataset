@@ -4,41 +4,41 @@ import path from 'path';
 import fs from 'fs/promises';
 import { getProjectRoot } from '@/lib/db/base';
 
-// 获取模型配置
+// Get model config
 export async function GET(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params);
     if (auth.response) return auth.response;
     const { projectId } = params;
 
-    // 验证项目 ID
+    // Validate project ID
     if (!projectId) {
       return NextResponse.json({ error: 'The project ID cannot be empty' }, { status: 400 });
     }
 
-    // 获取项目根目录
+    // Get project root
     const projectRoot = await getProjectRoot();
     const projectPath = path.join(projectRoot, projectId);
 
-    // 检查项目是否存在
+    // Check if project exists
     try {
       await fs.access(projectPath);
     } catch (error) {
       return NextResponse.json({ error: 'The project does not exist' }, { status: 404 });
     }
 
-    // 获取模型配置文件路径
+    // Get model config file path
     const modelConfigPath = path.join(projectPath, 'model-config.json');
 
-    // 检查模型配置文件是否存在
+    // Check if model config file exists
     try {
       await fs.access(modelConfigPath);
     } catch (error) {
-      // 如果配置文件不存在，返回默认配置
+      // If config file does not exist, return default config
       return NextResponse.json([]);
     }
 
-    // 读取模型配置文件
+    // Read model config file
     const modelConfigData = await fs.readFile(modelConfigPath, 'utf-8');
     const modelConfig = JSON.parse(modelConfigData);
 
@@ -49,41 +49,41 @@ export async function GET(request, { params }) {
   }
 }
 
-// 更新模型配置
+// Update model config
 export async function PUT(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
     if (auth.response) return auth.response;
     const { projectId } = params;
 
-    // 验证项目 ID
+    // Validate project ID
     if (!projectId) {
       return NextResponse.json({ error: 'The project ID cannot be empty' }, { status: 400 });
     }
 
-    // 获取请求体
+    // Get request body
     const modelConfig = await request.json();
 
-    // 验证请求体
+    // Validate request body
     if (!modelConfig || !Array.isArray(modelConfig)) {
       return NextResponse.json({ error: 'The model configuration must be an array' }, { status: 400 });
     }
 
-    // 获取项目根目录
+    // Get project root
     const projectRoot = await getProjectRoot();
     const projectPath = path.join(projectRoot, projectId);
 
-    // 检查项目是否存在
+    // Check if project exists
     try {
       await fs.access(projectPath);
     } catch (error) {
       return NextResponse.json({ error: 'The project does not exist' }, { status: 404 });
     }
 
-    // 获取模型配置文件路径
+    // Get model config file path
     const modelConfigPath = path.join(projectPath, 'model-config.json');
 
-    // 写入模型配置文件
+    // Write model config file
     await fs.writeFile(modelConfigPath, JSON.stringify(modelConfig, null, 2), 'utf-8');
 
     return NextResponse.json({ message: 'Model configuration updated successfully' });

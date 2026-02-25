@@ -3,7 +3,7 @@ import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getImageByName } from '@/lib/db/images';
 import imageService from '@/lib/services/images';
 
-// 生成图片问题
+// Generate image questions
 export async function POST(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
@@ -12,20 +12,20 @@ export async function POST(request, { params }) {
     const { imageName, count = 3, model, language = 'zh' } = await request.json();
 
     if (!imageName) {
-      return NextResponse.json({ error: '缺少图片名称' }, { status: 400 });
+      return NextResponse.json({ error: 'Image name is required' }, { status: 400 });
     }
 
     if (!model) {
-      return NextResponse.json({ error: '请选择一个视觉模型' }, { status: 400 });
+      return NextResponse.json({ error: 'Please select a vision model' }, { status: 400 });
     }
 
-    // 获取图片信息
+    // Get image info
     const image = await getImageByName(projectId, imageName);
     if (!image) {
-      return NextResponse.json({ error: '图片不存在' }, { status: 404 });
+      return NextResponse.json({ error: 'Image not found' }, { status: 404 });
     }
 
-    // 调用图片问题生成服务
+    // Call image question generation service
     const result = await imageService.generateQuestionsForImage(projectId, image.id, {
       model,
       language,

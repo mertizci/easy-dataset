@@ -9,13 +9,13 @@ import {
 } from '@/lib/db/questions';
 import { getImageById, getImageChunk } from '@/lib/db/images';
 
-// 获取项目的所有问题
+// Get all project questions
 export async function GET(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params);
     if (auth.response) return auth.response;
     const { projectId } = params;
-    // 验证项目ID
+    // Validate project ID
     if (!projectId) {
       return NextResponse.json({ error: 'Missing project ID' }, { status: 400 });
     }
@@ -44,7 +44,7 @@ export async function GET(request, { params }) {
       let data = await getAllQuestionsByProjectId(projectId);
       return NextResponse.json(data);
     }
-    // 获取问题列表
+    // Get question list
     const questions = await getQuestions(
       projectId,
       parseInt(searchParams.get('page')),
@@ -63,7 +63,7 @@ export async function GET(request, { params }) {
   }
 }
 
-// 新增问题
+// Add question
 export async function POST(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
@@ -72,7 +72,7 @@ export async function POST(request, { params }) {
     const body = await request.json();
     const { question, chunkId, label } = body;
 
-    // 验证必要参数
+    // Validate required params
     if (!projectId || !question) {
       return NextResponse.json({ error: 'Missing necessary parameters' }, { status: 400 });
     }
@@ -83,12 +83,12 @@ export async function POST(request, { params }) {
       body.label = 'image';
     }
 
-    // 添加新问题
+    // Add new question
     let questions = [body];
-    // 保存更新后的数据
+    // Save updated data
     let data = await saveQuestions(projectId, questions);
 
-    // 返回成功响应
+    // Return success response
     return NextResponse.json(data);
   } catch (error) {
     console.error('Failed to create question:', String(error));
@@ -96,22 +96,22 @@ export async function POST(request, { params }) {
   }
 }
 
-// 更新问题
+// Update question
 export async function PUT(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
     if (auth.response) return auth.response;
     const body = await request.json();
-    // 保存更新后的数据
+    // Save updated data
     const { imageId } = body;
     if (imageId) {
       body.imageName = (await getImageById(imageId))?.imageName;
     }
     let data = await updateQuestion(body);
-    // 返回更新后的问题数据
+    // Return updated question data
     return NextResponse.json(data);
   } catch (error) {
-    console.error('更新问题失败:', String(error));
-    return NextResponse.json({ error: error.message || '更新问题失败' }, { status: 500 });
+    console.error('Failed to update question:', String(error));
+    return NextResponse.json({ error: error.message || 'Failed to update question' }, { status: 500 });
   }
 }

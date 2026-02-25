@@ -16,7 +16,7 @@ export default function HeroSection({ onCreateProject }) {
 
   return (
     <Box sx={{ ...styles.heroSection, ...styles.heroBackground(theme) }}>
-      {/* 添加粒子背景 */}
+      {/* Particle background */}
       <ParticleBackground />
 
       <Box sx={styles.decorativeCircle} />

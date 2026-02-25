@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireProjectAuth } from '@/lib/auth/apiGuard';
 
-// 获取默认提示词内容
+// Get default prompt content
 export async function GET(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params);
@@ -14,7 +14,7 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'promptType and promptKey are required' }, { status: 400 });
     }
 
-    // 动态导入对应的提示词模块
+    // Dynamically import prompt module
     let promptModule;
     try {
       promptModule = await import(`@/lib/llm/prompts/${promptType}`);
@@ -22,7 +22,7 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: `Prompt module ${promptType} not found` }, { status: 404 });
     }
 
-    // 获取指定的提示词常量
+    // Get specified prompt constant
     const promptContent = promptModule[promptKey];
     if (!promptContent) {
       return NextResponse.json({ error: `Prompt key ${promptKey} not found in module ${promptType}` }, { status: 404 });
@@ -35,7 +35,7 @@ export async function GET(request, { params }) {
       promptKey
     });
   } catch (error) {
-    console.error('获取默认提示词失败:', error);
+    console.error('Failed to fetch default prompt:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

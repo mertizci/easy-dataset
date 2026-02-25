@@ -2,20 +2,20 @@ import { NextResponse } from 'next/server';
 import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { deleteChunkById, getChunkById, updateChunkById } from '@/lib/db/chunks';
 
-// 获取文本块内容
+// Get chunk content
 export async function GET(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params);
     if (auth.response) return auth.response;
     const { projectId, chunkId } = params;
-    // 验证参数
+    // Validate params
     if (!projectId) {
       return NextResponse.json({ error: 'Project ID cannot be empty' }, { status: 400 });
     }
     if (!chunkId) {
       return NextResponse.json({ error: 'Text block ID cannot be empty' }, { status: 400 });
     }
-    // 获取文本块内容
+    // Get chunk content
     const chunk = await getChunkById(chunkId);
 
     return NextResponse.json(chunk);
@@ -25,13 +25,13 @@ export async function GET(request, { params }) {
   }
 }
 
-// 删除文本块
+// Delete chunk
 export async function DELETE(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
     if (auth.response) return auth.response;
     const { projectId, chunkId } = params;
-    // 验证参数
+    // Validate params
     if (!projectId) {
       return NextResponse.json({ error: 'Project ID cannot be empty' }, { status: 400 });
     }
@@ -47,34 +47,34 @@ export async function DELETE(request, { params }) {
   }
 }
 
-// 编辑文本块内容
+// Edit chunk content
 export async function PATCH(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
     if (auth.response) return auth.response;
     const { projectId, chunkId } = params;
 
-    // 验证参数
+    // Validate params
     if (!projectId) {
-      return NextResponse.json({ error: '项目ID不能为空' }, { status: 400 });
+      return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
     }
 
     if (!chunkId) {
-      return NextResponse.json({ error: '文本块ID不能为空' }, { status: 400 });
+      return NextResponse.json({ error: 'Chunk ID is required' }, { status: 400 });
     }
 
-    // 解析请求体获取新内容
+    // Parse request body for new content
     const requestData = await request.json();
     const { content } = requestData;
 
     if (!content) {
-      return NextResponse.json({ error: '内容不能为空' }, { status: 400 });
+      return NextResponse.json({ error: 'Content is required' }, { status: 400 });
     }
 
     let res = await updateChunkById(chunkId, { content });
     return NextResponse.json(res);
   } catch (error) {
-    console.error('编辑文本块失败:', String(error));
-    return NextResponse.json({ error: error.message || '编辑文本块失败' }, { status: 500 });
+    console.error('Failed to edit chunk:', String(error));
+    return NextResponse.json({ error: error.message || 'Failed to edit chunk' }, { status: 500 });
   }
 }

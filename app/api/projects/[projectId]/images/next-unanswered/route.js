@@ -5,14 +5,14 @@ import { getImageDetailWithQuestions } from '@/lib/services/images';
 
 const prisma = new PrismaClient();
 
-// 获取下一个有未标注问题的图片
+// Get next image with unanswered questions
 export async function GET(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params);
     if (auth.response) return auth.response;
     const { projectId } = params;
 
-    // 查找第一个有未标注问题的图片
+    // Find first image with unanswered questions
     const unansweredQuestion = await prisma.questions.findFirst({
       where: {
         projectId,
@@ -30,7 +30,7 @@ export async function GET(request, { params }) {
       });
     }
 
-    // 调用服务层获取图片详情
+    // Call service to get image details
     const imageData = await getImageDetailWithQuestions(projectId, unansweredQuestion.imageId);
 
     return NextResponse.json({

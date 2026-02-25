@@ -7,7 +7,7 @@ import { getProject } from '@/lib/db/projects';
 const LLMClient = require('@/lib/llm/core');
 
 /**
- * 生成标签接口：根据顶级主题、某级标签构造指定数量的子标签
+ * Generate tags API: construct child tags by parent topic/tag
  */
 export async function POST(request, { params }) {
   try {
@@ -15,19 +15,19 @@ export async function POST(request, { params }) {
     if (auth.response) return auth.response;
     const { projectId } = params;
 
-    // 验证项目ID
+    // Validate project ID
     if (!projectId) {
-      return NextResponse.json({ error: '项目ID不能为空' }, { status: 400 });
+      return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
     }
 
     const { parentTag, parentTagId, tagPath, count = 10, model, language = 'zh' } = await request.json();
 
     if (!parentTag) {
-      const errorMsg = language === 'en' ? 'Topic tag name cannot be empty' : '主题标签名称不能为空';
+      const errorMsg = language === 'en' ? 'Topic tag name cannot be empty' : 'Topic tag name is required';
       return NextResponse.json({ error: errorMsg }, { status: 400 });
     }
 
-    // 查询现有标签
+    // Query existing tags
     const existingTags = await db.tags.findMany({
       where: {
         projectId,
@@ -37,34 +37,34 @@ export async function POST(request, { params }) {
 
     const existingTagNames = existingTags.map(tag => tag.label);
 
-    // 创建LLM客户端
+    // Create LLM client
     const llmClient = new LLMClient(model);
 
-    // 生成提示词
+    // Generate prompt
     const prompt = await distillTagsPrompt(
       language,
       { tagPath, parentTag, existingTags: existingTagNames, count },
       projectId
     );
 
-    // 调用大模型生成标签
+    // Call LLM to generate tags
     const { answer } = await llmClient.getResponseWithCOT(prompt);
 
-    // 解析返回的标签
+    // Parse returned tags
     let tags = [];
 
     try {
       tags = JSON.parse(answer);
     } catch (error) {
-      console.error('解析标签JSON失败:', String(error));
-      // 尝试使用正则表达式提取标签
+      console.error('Failed to parse tag JSON:', String(error));
+      // Try to extract tags with regex
       const matches = answer.match(/"([^"]+)"/g);
       if (matches) {
         tags = matches.map(match => match.replace(/"/g, ''));
       }
     }
 
-    // 保存标签到数据库
+    // Save tags to database
     const savedTags = [];
     for (let i = 0; i < tags.length; i++) {
       const tagName = tags[i];
@@ -78,14 +78,14 @@ export async function POST(request, { params }) {
         });
         savedTags.push(tag);
       } catch (error) {
-        console.error(`[标签生成] 保存标签 ${tagName} 失败:`, String(error));
+        console.error(`[Tag generation] Failed to save tag ${tagName}:`, String(error));
         throw error;
       }
     }
     return NextResponse.json(savedTags);
   } catch (error) {
-    console.error('[标签生成] 生成标签失败:', String(error));
-    console.error('[标签生成] 错误堆栈:', error.stack);
-    return NextResponse.json({ error: error.message || '生成标签失败' }, { status: 500 });
+    console.error('[Tag generation] Failed to generate tags:', String(error));
+    console.error('[Tag generation] Error stack:', error.stack);
+    return NextResponse.json({ error: error.message || 'Failed to generate tags' }, { status: 500 });
   }
 }

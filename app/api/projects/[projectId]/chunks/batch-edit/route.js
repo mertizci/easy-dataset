@@ -5,7 +5,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 /**
- * 批量编辑文本块内容
+ * Batch edit chunk content
  * POST /api/projects/[projectId]/chunks/batch-edit
  */
 export async function POST(request, { params }) {
@@ -16,7 +16,7 @@ export async function POST(request, { params }) {
     const body = await request.json();
     const { position, content, chunkIds } = body;
 
-    // 验证参数
+    // Validate params
     if (!position || !content || !chunkIds || !Array.isArray(chunkIds) || chunkIds.length === 0) {
       return NextResponse.json({ error: 'Missing required parameters: position, content, chunkIds' }, { status: 400 });
     }
@@ -25,7 +25,7 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Position must be "start" or "end"' }, { status: 400 });
     }
 
-    // 验证项目权限（获取要编辑的文本块）
+    // Verify project access (fetch chunks to edit)
     const chunksToUpdate = await prisma.chunks.findMany({
       where: {
         id: { in: chunkIds },
@@ -46,15 +46,15 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Some chunks not found' }, { status: 400 });
     }
 
-    // 准备更新数据
+    // Prepare update data
     const updates = chunksToUpdate.map(chunk => {
       let newContent;
 
       if (position === 'start') {
-        // 在开头添加内容
+        // Prepend content
         newContent = content + '\n\n' + chunk.content;
       } else {
-        // 在结尾添加内容
+        // Append content
         newContent = chunk.content + '\n\n' + content;
       }
 
@@ -78,10 +78,10 @@ export async function POST(request, { params }) {
       return results;
     }
 
-    const BATCH_SIZE = 50; // 每批处理 50 个
+    const BATCH_SIZE = 50; // Process 50 per batch
     await processBatches(updates, BATCH_SIZE, update => prisma.chunks.update(update));
 
-    // 记录操作日志（可选）
+    // Log operation (optional)
     console.log(`Successfully updated ${chunksToUpdate.length} chunks`);
 
     return NextResponse.json({
@@ -90,7 +90,7 @@ export async function POST(request, { params }) {
       message: `Successfully updated ${chunksToUpdate.length} chunks`
     });
   } catch (error) {
-    console.error('批量编辑文本块失败:', error);
+    console.error('Batch edit chunks failed:', error);
 
     return NextResponse.json(
       {

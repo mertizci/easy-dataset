@@ -10,7 +10,7 @@ import {
   getPromptTemplates
 } from '@/lib/db/custom-prompts';
 
-// 获取项目的自定义提示词
+// Get project custom prompts
 export async function GET(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params);
@@ -33,12 +33,12 @@ export async function GET(request, { params }) {
       templates
     });
   } catch (error) {
-    console.error('获取自定义提示词失败:', error);
+    console.error('Failed to fetch custom prompts:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-// 保存自定义提示词
+// Save custom prompt
 export async function POST(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
@@ -50,7 +50,7 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
     }
 
-    // 批量保存
+    // Batch save
     if (body.prompts && Array.isArray(body.prompts)) {
       const results = await batchSaveCustomPrompts(projectId, body.prompts);
       return NextResponse.json({
@@ -59,7 +59,7 @@ export async function POST(request, { params }) {
       });
     }
 
-    // 单个保存
+    // Single save
     const { promptType, promptKey, language, content } = body;
     if (!promptType || !promptKey || !language || content === undefined) {
       return NextResponse.json(
@@ -76,12 +76,12 @@ export async function POST(request, { params }) {
       result
     });
   } catch (error) {
-    console.error('保存自定义提示词失败:', error);
+    console.error('Failed to save custom prompt:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-// 删除自定义提示词
+// Delete custom prompt
 export async function DELETE(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
@@ -106,7 +106,7 @@ export async function DELETE(request, { params }) {
       success
     });
   } catch (error) {
-    console.error('删除自定义提示词失败:', error);
+    console.error('Failed to delete custom prompt:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -3,7 +3,7 @@ import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import templateDb from '@/lib/db/questionTemplates';
 import { generateQuestionsFromTemplate, checkTemplateGenerationAvailability } from '@/lib/services/questions/template';
 
-// 获取问题模板列表
+// Get question template list
 export async function GET(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params);
@@ -15,11 +15,11 @@ export async function GET(request, { params }) {
 
     const templates = await templateDb.getTemplates(projectId, { sourceType, search });
 
-    // 获取使用统计
+    // Get usage stats
     const templateIds = templates.map(t => t.id);
     const usageCounts = await templateDb.getTemplatesUsageCount(templateIds);
 
-    // 添加使用统计到模板数据
+    // Add usage stats to template data
     const templatesWithUsage = templates.map(template => ({
       ...template,
       usageCount: usageCounts[template.id] || 0
@@ -35,7 +35,7 @@ export async function GET(request, { params }) {
   }
 }
 
-// 创建问题模板
+// Create question template
 export async function POST(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
@@ -45,29 +45,29 @@ export async function POST(request, { params }) {
 
     const { question, sourceType, answerType, description, labels, customFormat, order, autoGenerate } = data;
 
-    // 验证必填字段
+    // Validate required fields
     if (!question || !sourceType || !answerType) {
-      return NextResponse.json({ error: '缺少必要参数：question, sourceType, answerType' }, { status: 400 });
+      return NextResponse.json({ error: 'Required parameters missing: question, sourceType, answerType' }, { status: 400 });
     }
 
-    // 验证数据源类型
+    // Validate source type
     if (!['image', 'text'].includes(sourceType)) {
-      return NextResponse.json({ error: '无效的数据源类型' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid source type' }, { status: 400 });
     }
 
-    // 验证答案类型
+    // Validate answer type
     if (!['text', 'label', 'custom_format'].includes(answerType)) {
-      return NextResponse.json({ error: '无效的答案类型' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid answer type' }, { status: 400 });
     }
 
-    // 如果是标签类型，验证 labels
+    // If label type, validate labels
     if (answerType === 'label' && (!labels || !Array.isArray(labels) || labels.length === 0)) {
-      return NextResponse.json({ error: '标签类型问题必须提供标签列表' }, { status: 400 });
+      return NextResponse.json({ error: 'Label type questions must provide labels list' }, { status: 400 });
     }
 
-    // 如果是自定义格式，验证 customFormat
+    // If custom format, validate customFormat
     if (answerType === 'custom_format' && !customFormat) {
-      return NextResponse.json({ error: '自定义格式问题必须提供格式定义' }, { status: 400 });
+      return NextResponse.json({ error: 'Custom format questions must provide format definition' }, { status: 400 });
     }
 
     const template = await templateDb.createTemplate(projectId, {
@@ -82,10 +82,10 @@ export async function POST(request, { params }) {
 
     let generationResult = null;
 
-    // 如果启用自动生成，则为所有相关数据源创建问题
+    // If auto-generate enabled, create questions for all related data sources
     if (autoGenerate) {
       try {
-        // 先检查是否有可用的数据源
+        // Check for available data sources first
         const availability = await checkTemplateGenerationAvailability(projectId, sourceType);
 
         if (availability.available) {
@@ -99,12 +99,12 @@ export async function POST(request, { params }) {
           };
         }
       } catch (error) {
-        console.error('自动生成问题失败:', error);
+        console.error('Auto-generate questions failed:', error);
         generationResult = {
           success: false,
           successCount: 0,
           failCount: 0,
-          message: '自动生成问题时发生错误'
+          message: 'Error occurred while auto-generating questions'
         };
       }
     }

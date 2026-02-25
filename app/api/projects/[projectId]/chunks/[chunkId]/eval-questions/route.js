@@ -4,7 +4,7 @@ import { generateEvalQuestionsForChunk } from '@/lib/services/eval';
 import logger from '@/lib/util/logger';
 
 /**
- * 为指定文本块生成测评题目
+ * Generate eval questions for specified chunk
  */
 export async function POST(request, { params }) {
   try {
@@ -12,19 +12,19 @@ export async function POST(request, { params }) {
     if (auth.response) return auth.response;
     const { projectId, chunkId } = params;
 
-    // 验证参数
+    // Validate params
     if (!projectId || !chunkId) {
       return NextResponse.json({ error: 'Project ID and Chunk ID are required' }, { status: 400 });
     }
 
-    // 获取请求体
+    // Get request body
     const { model, language = 'zh-CN' } = await request.json();
 
     if (!model) {
       return NextResponse.json({ error: 'Model configuration is required' }, { status: 400 });
     }
 
-    // 调用服务层生成测评题目
+    // Call service to generate eval questions
     const result = await generateEvalQuestionsForChunk(projectId, chunkId, {
       model,
       language

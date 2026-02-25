@@ -150,12 +150,12 @@ export default function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               autoComplete="new-password"
-              helperText="At least 6 characters"
+              helperText={t('auth.passwordMinLength')}
               sx={{ mb: 2 }}
             />
             <TextField
               fullWidth
-              label="Name (optional)"
+              label={t('auth.nameOptional')}
               value={name}
               onChange={(e) => setName(e.target.value)}
               sx={{ mb: 2 }}

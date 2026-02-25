@@ -5,7 +5,7 @@ import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import fs from 'fs/promises';
 import path from 'path';
 
-// 获取图片数据集列表
+// Get image dataset list
 export async function GET(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params);
@@ -20,7 +20,7 @@ export async function GET(request, { params }) {
     const minScore = searchParams.get('minScore');
     const maxScore = searchParams.get('maxScore');
 
-    // 构建筛选条件
+    // Build filter conditions
     const filters = {};
     if (search) {
       filters.search = search;
@@ -37,10 +37,10 @@ export async function GET(request, { params }) {
 
     const result = await getImageDatasetsByProject(projectId, page, pageSize, filters);
 
-    // 获取项目路径
+    // Get project path
     const projectPath = await getProjectPath(projectId);
 
-    // 为每个数据集添加图片 base64
+    // Add image base64 to each dataset
     const datasetsWithImages = await Promise.all(
       result.data.map(async dataset => {
         try {

@@ -7,19 +7,19 @@ import LLMClient from '@/lib/llm/core/index';
 import { getNewAnswerPrompt } from '@/lib/llm/prompts/newAnswer';
 import { extractJsonFromLLMOutput } from '@/lib/llm/common/util';
 
-// 优化数据集答案
+// Optimize dataset answer
 export async function POST(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
     if (auth.response) return auth.response;
     const { projectId } = params;
 
-    // 验证项目ID
+    // Validate project ID
     if (!projectId) {
       return NextResponse.json({ error: 'Project ID cannot be empty' }, { status: 400 });
     }
 
-    // 获取请求体
+    // Get request body
     const { datasetId, model, advice, language } = await request.json();
 
     if (!datasetId) {
@@ -34,13 +34,13 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Please provide optimization suggestions' }, { status: 400 });
     }
 
-    // 获取数据集内容
+    // Get dataset content
     const dataset = await getDatasetsById(datasetId);
     if (!dataset) {
       return NextResponse.json({ error: 'Dataset does not exist' }, { status: 404 });
     }
 
-    // 创建LLM客户端
+    // Create LLM client
     const llmClient = new LLMClient(model);
 
     const { question, answer, cot, chunkContent: storedChunkContent, questionId } = dataset;
@@ -59,28 +59,28 @@ export async function POST(request, { params }) {
       }
     }
 
-    // 生成优化后的答案和思维链
+    // Generate optimized answer and chain-of-thought
     const prompt = await getNewAnswerPrompt(language, { question, answer, cot, advice, chunkContent }, projectId);
 
     const response = await llmClient.getResponse(prompt);
 
-    // 从LLM输出中提取JSON格式的优化结果
+    // Extract JSON optimization result from LLM output
     const optimizedResult = extractJsonFromLLMOutput(response);
 
     if (!optimizedResult || !optimizedResult.answer) {
       return NextResponse.json({ error: 'Failed to optimize answer, please try again' }, { status: 500 });
     }
 
-    // 更新数据集
+    // Update dataset
     const updatedDataset = {
       ...dataset,
       answer: optimizedResult.answer,
-      cot: cot ? optimizedResult.cot || cot : '' // 如果没有提供思考过程，则不更新
+      cot: cot ? optimizedResult.cot || cot : '' // Do not update if no CoT provided
     };
 
     await updateDataset(updatedDataset);
 
-    // 返回优化后的数据集
+    // Return optimized dataset
     return NextResponse.json({
       success: true,
       dataset: updatedDataset

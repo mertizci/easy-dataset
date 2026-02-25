@@ -16,25 +16,25 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
-    // 1. 获取原数据集
+    // 1. Get original dataset
     const dataset = await getDatasetsById(datasetId);
     if (!dataset) {
       return NextResponse.json({ error: 'Dataset not found' }, { status: 404 });
     }
 
-    // 2. 构建提示词
-    // 将原问题和答案合并作为上下文文本
+    // 2. Build prompt
+    // Merge question and answer as context text
     const text = `Question: ${dataset.question}\nAnswer: ${dataset.answer}`;
 
     const prompt = await getEvalQuestionPrompt(language || 'zh-CN', questionType, { text, number: count }, projectId);
 
-    // 3. 调用 LLM
+    // 3. Call LLM
     const client = new LLMClient(model);
 
     const response = await client.getResponse(prompt);
     const result = extractJsonFromLLMOutput(response);
 
-    // 结果应该是一个数组
+    // Result should be an array
     if (!result || !Array.isArray(result)) {
       throw new Error('Failed to parse LLM output or output is not an array');
     }

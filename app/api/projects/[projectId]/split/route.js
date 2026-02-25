@@ -5,14 +5,14 @@ import { getProject, updateProject } from '@/lib/db/projects';
 import { getTags } from '@/lib/db/tags';
 import { handleDomainTree } from '@/lib/util/domain-tree';
 
-// 处理文本分割请求
+// Handle text split request
 export async function POST(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
     if (auth.response) return auth.response;
     const { projectId } = params;
 
-    // 获取请求体
+    // Get request body
     const { fileNames, model, language, domainTreeAction = 'rebuild' } = await request.json();
 
     if (!model) {
@@ -28,7 +28,7 @@ export async function POST(request, { params }) {
     };
     for (let i = 0; i < fileNames.length; i++) {
       const fileName = fileNames[i];
-      // 分割文本
+      // Split text
       const { toc, chunks, totalChunks } = await splitProjectFile(projectId, fileName);
       result.toc += toc;
       result.chunks.push(...chunks);
@@ -36,7 +36,7 @@ export async function POST(request, { params }) {
       console.log(projectId, fileName, `Text split completed, ${domainTreeAction} domain tree`);
     }
 
-    // 调用领域树处理模块
+    // Call domain tree handler
     const tags = await handleDomainTree({
       projectId,
       action: domainTreeAction,
@@ -62,7 +62,7 @@ export async function POST(request, { params }) {
   }
 }
 
-// 获取项目中的所有文本块
+// Get all text chunks in project
 export async function GET(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params);
@@ -70,20 +70,20 @@ export async function GET(request, { params }) {
     const { projectId } = params;
     const { searchParams } = new URL(request.url);
     const filter = searchParams.get('filter');
-    // 验证项目ID
+    // Validate project ID
     if (!projectId) {
-      return NextResponse.json({ error: 'The project ID cannot be empty' }, { status: 400 });
+      return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
     }
 
-    // 获取文本块详细信息
+    // Get chunk details
     const result = await getProjectChunks(projectId, filter);
 
     const tags = await getTags(projectId);
 
-    // 返回详细的文本块信息和文件结果（单个文件）
+    // Return chunk details and file result (single file)
     return NextResponse.json({
       chunks: result.chunks,
-      ...result.fileResult, // 单个文件结果，而不是数组
+      ...result.fileResult, // Single file result, not array
       tags
     });
   } catch (error) {

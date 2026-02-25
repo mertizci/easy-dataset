@@ -16,13 +16,13 @@ function normalizeModelEndpoint(endpoint = '') {
   return normalizedEndpoint;
 }
 
-// 获取模型配置列表
+// Get model config list
 export async function GET(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params);
     if (auth.response) return auth.response;
     const { projectId } = params;
-    // 验证项目 ID
+    // Validate project ID
     if (!projectId) {
       return NextResponse.json({ error: 'The project ID cannot be empty' }, { status: 400 });
     }
@@ -59,31 +59,31 @@ export async function GET(request, { params }) {
   }
 }
 
-// 保存模型配置
+// Save model config
 export async function POST(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
     if (auth.response) return auth.response;
     const { projectId } = params;
 
-    // 验证项目 ID
+    // Validate project ID
     if (!projectId) {
       return NextResponse.json({ error: 'The project ID cannot be empty' }, { status: 400 });
     }
-    // 获取请求体
+    // Get request body
     const modelConfig = await request.json();
 
-    // 验证请求体
+    // Validate request body
     if (!modelConfig) {
       return NextResponse.json({ error: 'The model configuration cannot be empty ' }, { status: 400 });
     }
     modelConfig.projectId = projectId;
     modelConfig.endpoint = normalizeModelEndpoint(modelConfig.endpoint);
-    // 如果没有 modelId，使用 modelName 补齐（兼容旧逻辑）
+    // If no modelId, use modelName (backward compatibility)
     if (!modelConfig.modelId && modelConfig.modelName) {
       modelConfig.modelId = modelConfig.modelName;
     }
-    // 如果没有 modelName，使用 modelId 补齐
+    // If no modelName, use modelId
     if (!modelConfig.modelName && modelConfig.modelId) {
       modelConfig.modelName = modelConfig.modelId;
     }

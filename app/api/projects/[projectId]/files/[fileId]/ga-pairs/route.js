@@ -7,32 +7,32 @@ import logger from '@/lib/util/logger';
 import { db } from '@/lib/db/index';
 
 /**
- * 生成文件的 GA 对
+ * Generate GA pairs for file
  */
 export async function POST(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
     if (auth.response) return auth.response;
     const { projectId, fileId } = params;
-    const { regenerate = false, appendMode = false, language = '中文' } = await request.json();
+    const { regenerate = false, appendMode = false, language = 'zh' } = await request.json();
 
-    // 验证参数
+    // Validate parameters
     if (!projectId || !fileId) {
       return NextResponse.json({ error: 'Project ID and File ID are required' }, { status: 400 });
     }
 
     logger.info(`Starting GA pairs generation for project: ${projectId}, file: ${fileId}, appendMode: ${appendMode}`);
 
-    // 检查文件是否存在
+    // Check if file exists
     const file = await getUploadFileInfoById(fileId);
     if (!file || file.projectId !== projectId) {
       return NextResponse.json({ error: 'File not found or does not belong to the project' }, { status: 404 });
     }
 
-    // 获取现有的GA对
+    // Get existing GA pairs
     const existingGaPairs = await getGaPairsByFileId(fileId);
 
-    // 如果是追加模式且已有GA对，或者不是重新生成且已存在GA对
+    // If append mode with existing GA pairs, or not regenerate and GA pairs exist
     if (!regenerate && !appendMode && existingGaPairs.length > 0) {
       return NextResponse.json({
         success: true,
@@ -41,7 +41,7 @@ export async function POST(request, { params }) {
       });
     }
 
-    // 读取文件内容
+    // Read file content
     const fileContent = await getFileContent(projectId, file.fileName);
     if (!fileContent) {
       return NextResponse.json({ error: 'Failed to read file content' }, { status: 500 });
@@ -49,7 +49,7 @@ export async function POST(request, { params }) {
 
     logger.info(`File content loaded successfully, length: ${fileContent.length}`);
 
-    // 检查模型配置
+    // Check model config
     try {
       const { getActiveModel } = await import('@/lib/services/models');
       const activeModel = await getActiveModel(projectId);
@@ -71,7 +71,7 @@ export async function POST(request, { params }) {
       );
     }
 
-    // 调用 LLM 生成 GA 对
+    // Call LLM to generate GA pairs
     logger.info(`Generating GA pairs for file: ${file.fileName}`);
     let generatedGaPairs;
 
@@ -93,7 +93,7 @@ export async function POST(request, { params }) {
     } catch (generationError) {
       logger.error('GA pairs generation failed:', generationError);
 
-      // 现有的错误处理逻辑...
+      // Existing error handling logic
       let errorMessage = 'Failed to generate GA pairs';
       if (generationError.message.includes('No active model')) {
         errorMessage = 'No active AI model available. Please configure and activate a model in settings.';
@@ -108,13 +108,13 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 
-    // 保存到数据库
+    // Save to database
     try {
       if (appendMode && existingGaPairs.length > 0) {
-        // 追加模式：只保存新生成的GA对，不删除现有的
+        // Append mode: save only new GA pairs, keep existing
         logger.info(`Appending ${generatedGaPairs.length} new GA pairs to existing ${existingGaPairs.length} pairs`);
 
-        // 为新GA对设置正确的pairNumber
+        // Set correct pairNumber for new GA pairs
         const startPairNumber = existingGaPairs.length + 1;
         const newGaPairData = generatedGaPairs.map((pair, index) => ({
           projectId,
@@ -127,11 +127,11 @@ export async function POST(request, { params }) {
           isActive: true
         }));
 
-        // 只创建新的GA对，不删除现有的
+        // Create only new GA pairs, keep existing
         await createGaPairs(newGaPairData);
         logger.info('New GA pairs appended to database successfully');
       } else {
-        // 覆盖模式：删除现有的，保存新的
+        // Overwrite mode: delete existing, save new
         await saveGaPairs(projectId, fileId, generatedGaPairs);
         logger.info('GA pairs saved to database successfully');
       }
@@ -143,11 +143,11 @@ export async function POST(request, { params }) {
       );
     }
 
-    // 获取保存后的所有GA对
+    // Get all GA pairs after save
     const allGaPairs = await getGaPairsByFileId(fileId);
 
     if (appendMode && existingGaPairs.length > 0) {
-      // 追加模式：只返回新生成的GA对
+      // Append mode: return only new GA pairs
       const newGaPairs = allGaPairs.slice(existingGaPairs.length);
       logger.info(`Successfully appended ${newGaPairs.length} GA pairs. Total pairs: ${allGaPairs.length}`);
 
@@ -158,7 +158,7 @@ export async function POST(request, { params }) {
         total: allGaPairs.length
       });
     } else {
-      // 覆盖模式：返回所有GA对
+      // Overwrite mode: return all GA pairs
       logger.info(`Successfully generated and saved ${allGaPairs.length} GA pairs for file: ${file.fileName}`);
 
       return NextResponse.json({
@@ -177,7 +177,7 @@ export async function POST(request, { params }) {
 }
 
 /**
- * 获取文件的 GA 对
+ * Get GA pairs for file
  */
 export async function GET(request, { params }) {
   try {
@@ -202,7 +202,7 @@ export async function GET(request, { params }) {
 }
 
 /**
- * 更新/替换文件的所有 GA 对
+ * Update/replace all GA pairs for file
  */
 export async function PUT(request, { params }) {
   try {
@@ -223,14 +223,14 @@ export async function PUT(request, { params }) {
 
     logger.info(`Replacing all GA pairs for file ${fileId} with ${updates.length} pairs`);
 
-    // 使用数据库事务确保原子性操作
+    // Use database transaction for atomicity
     const results = await db.$transaction(async tx => {
-      // 1. 先删除所有现有的GA对
+      // 1. Delete all existing GA pairs
       await tx.gaPairs.deleteMany({
         where: { fileId }
       });
 
-      // 2. 然后创建新的GA对
+      // 2. Create new GA pairs
       if (updates.length > 0) {
         const gaPairData = updates.map((pair, index) => ({
           projectId,
@@ -243,7 +243,7 @@ export async function PUT(request, { params }) {
           isActive: pair.isActive !== undefined ? pair.isActive : true
         }));
 
-        // 验证数据
+        // Validate data
         for (const data of gaPairData) {
           if (!data.genreTitle || !data.audienceTitle) {
             throw new Error(`Invalid GA pair data: missing genre or audience title`);
@@ -253,7 +253,7 @@ export async function PUT(request, { params }) {
         await tx.gaPairs.createMany({ data: gaPairData });
       }
 
-      // 3. 返回新创建的GA对
+      // 3. Return newly created GA pairs
       return await tx.gaPairs.findMany({
         where: { fileId },
         orderBy: { pairNumber: 'asc' }
@@ -273,7 +273,7 @@ export async function PUT(request, { params }) {
 }
 
 /**
- * 切换 GA 对激活状态
+ * Toggle GA pair active status
  */
 export async function PATCH(request, { params }) {
   try {

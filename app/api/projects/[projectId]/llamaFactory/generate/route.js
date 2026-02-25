@@ -16,7 +16,7 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'The project ID cannot be empty' }, { status: 400 });
     }
 
-    // 获取项目根目录
+    // Get project root
     const projectRoot = await getProjectRoot();
     const projectPath = path.join(projectRoot, projectId);
     const configPath = path.join(projectPath, 'dataset_info.json');
@@ -24,10 +24,10 @@ export async function POST(request, { params }) {
     const sharegptPath = path.join(projectPath, 'sharegpt.json');
     const multilingualThinkingPath = path.join(projectPath, 'multilingual-thinking.json');
 
-    // 获取数据集
+    // Get datasets
     let datasets = await getDatasets(projectId, !!confirmedOnly);
 
-    // 创建 dataset_info.json 配置
+    // Create dataset_info.json config
     const config = {
       [`[Easy Dataset] [${projectId}] Alpaca`]: {
         file_name: 'alpaca.json',
@@ -68,7 +68,7 @@ export async function POST(request, { params }) {
       }
     };
 
-    // 生成数据文件
+    // Generate data files
     const alpacaData = datasets.map(({ question, answer, cot }) => ({
       instruction: question,
       input: '',
@@ -123,7 +123,7 @@ export async function POST(request, { params }) {
 
     await fs.promises.writeFile(multilingualThinkingPath, multilingualThinkingLines, 'utf8');
 
-    // 写入文件
+    // Write files
     await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2));
     await fs.promises.writeFile(alpacaPath, JSON.stringify(alpacaData, null, 2));
     await fs.promises.writeFile(sharegptPath, JSON.stringify(sharegptData, null, 2));

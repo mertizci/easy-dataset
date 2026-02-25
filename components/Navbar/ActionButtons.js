@@ -19,8 +19,8 @@ import { authAtom } from '@/lib/store';
 import * as styles from './styles';
 
 /**
- * ActionButtons 组件
- * 右侧操作区按钮：语言切换、主题切换、文档、GitHub、更新检查
+ * ActionButtons component
+ * Right-side action buttons: language switch, theme toggle, docs, GitHub, update checker
  */
 export default function ActionButtons({
   theme,

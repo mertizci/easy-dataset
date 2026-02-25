@@ -8,7 +8,7 @@ export async function POST(req, { params }) {
     if (auth.response) return auth.response;
     const { projectId, datasetId } = params;
 
-    // 1. 获取数据集详情
+    // 1. Get dataset details
     const dataset = await db.datasets.findUnique({
       where: { id: datasetId, projectId }
     });
@@ -17,7 +17,7 @@ export async function POST(req, { params }) {
       return NextResponse.json({ error: 'Dataset not found' }, { status: 404 });
     }
 
-    // 2. 尝试通过 questionId 查找关联的 chunkId
+    // 2. Try to find chunkId via questionId
     let chunkId = null;
     if (dataset.questionId) {
       const question = await db.questions.findUnique({
@@ -28,8 +28,8 @@ export async function POST(req, { params }) {
       }
     }
 
-    // 3. 创建评估数据集记录
-    // 默认使用 open_ended 类型，因为通常数据集是问答对，适合作为评估
+    // 3. Create eval dataset record
+    // Use open_ended type by default (QA pairs fit evaluation)
     let evalTags = [];
     try {
       evalTags = JSON.parse(dataset.tags || '[]');
@@ -38,7 +38,7 @@ export async function POST(req, { params }) {
       evalTags = [];
     }
 
-    // 排除 'Eval' 标签，并将数组转为逗号分隔的字符串
+    // Exclude 'Eval' tag, convert array to comma-separated string
     const evalTagsString = evalTags.filter(tag => tag !== 'Eval').join(',');
 
     const evalDataset = await db.evalDatasets.create({
@@ -50,11 +50,11 @@ export async function POST(req, { params }) {
         tags: evalTagsString,
         note: dataset.note,
         chunkId: chunkId,
-        options: '' // 开放题不需要选项
+        options: '' // Open-ended questions need no options
       }
     });
 
-    // 4. 更新原数据集，添加 'Eval' 标签
+    // 4. Update original dataset with 'Eval' tag
     let currentTags = [];
     try {
       currentTags = JSON.parse(dataset.tags || '[]');

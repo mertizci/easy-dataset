@@ -7,7 +7,7 @@ import { importImagesFromDirectories } from '@/lib/services/images';
 import fs from 'fs/promises';
 import path from 'path';
 
-// 获取图片列表
+// Get image list
 export async function GET(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params);
@@ -31,7 +31,7 @@ export async function GET(request, { params }) {
   }
 }
 
-// 导入图片
+// Import images
 export async function POST(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
@@ -39,7 +39,7 @@ export async function POST(request, { params }) {
     const { projectId } = params;
     const { directories } = await request.json();
 
-    // 调用服务层处理图片导入
+    // Call service to handle image import
     const result = await importImagesFromDirectories(projectId, directories);
 
     return NextResponse.json(result);
@@ -49,7 +49,7 @@ export async function POST(request, { params }) {
   }
 }
 
-// 删除图片
+// Delete image
 export async function DELETE(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
@@ -59,36 +59,36 @@ export async function DELETE(request, { params }) {
     const imageId = searchParams.get('imageId');
 
     if (!imageId) {
-      return NextResponse.json({ error: '缺少图片ID' }, { status: 400 });
+      return NextResponse.json({ error: 'Image ID is required' }, { status: 400 });
     }
 
-    // 获取图片信息
+    // Get image info
     const image = await getImageDetail(imageId);
 
     if (!image) {
-      return NextResponse.json({ error: '图片不存在' }, { status: 404 });
+      return NextResponse.json({ error: 'Image not found' }, { status: 404 });
     }
 
-    // 删除关联的数据集
+    // Delete related datasets
     await db.imageDatasets.deleteMany({
       where: { imageId }
     });
 
-    // 删除关联的问题
+    // Delete related questions
     await db.questions.deleteMany({
       where: { imageId }
     });
 
-    // 删除文件
+    // Delete file
     const projectPath = await getProjectPath(projectId);
     const filePath = path.join(projectPath, 'images', image.imageName);
     try {
       await fs.unlink(filePath);
     } catch (err) {
-      console.warn('删除文件失败:', err);
+      console.warn('Failed to delete file:', err);
     }
 
-    // 删除数据库记录
+    // Delete database record
     await deleteImage(imageId);
 
     return NextResponse.json({ success: true });

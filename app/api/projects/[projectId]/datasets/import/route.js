@@ -23,18 +23,18 @@ export async function POST(request, { params }) {
       try {
         const dataset = datasets[i];
 
-        // 安全获取与清洗字段
+        // Safe get and sanitize fields
         const q = typeof dataset?.question === 'string' ? dataset.question.trim() : '';
         const a = typeof dataset?.answer === 'string' ? dataset.answer.trim() : '';
 
-        // 验证必填字段：缺失则跳过
+        // Validate required fields: skip if missing
         if (!q || !a) {
-          errors.push(`第 ${i + 1} 条记录缺少必填字段(question/answer)，已跳过`);
+          errors.push(`Record ${i + 1}: missing required fields (question/answer), skipped`);
           skippedCount++;
           continue;
         }
 
-        // 规范化可选字段
+        // Normalize optional fields
         const chunkName = dataset?.chunkName || 'Imported Data';
         const chunkContent = dataset?.chunkContent || 'Imported from external source';
         const model = dataset?.model || 'imported';
@@ -42,7 +42,7 @@ export async function POST(request, { params }) {
         const cot = typeof dataset?.cot === 'string' ? dataset.cot : '';
         const confirmed = typeof dataset?.confirmed === 'boolean' ? dataset.confirmed : false;
         const score = typeof dataset?.score === 'number' ? dataset.score : 0;
-        // tags: 支持数组/字符串/对象
+        // tags: support array/string/object
         let tags = '[]';
         if (Array.isArray(dataset?.tags)) {
           try {
@@ -59,7 +59,7 @@ export async function POST(request, { params }) {
             tags = '[]';
           }
         }
-        // other: 对象或字符串
+        // other: object or string
         let other = '{}';
         if (typeof dataset?.other === 'string') {
           other = dataset.other;
@@ -72,10 +72,10 @@ export async function POST(request, { params }) {
         }
         const note = typeof dataset?.note === 'string' ? dataset.note : '';
 
-        // 创建数据集记录
+        // Create dataset record
         const newDataset = await createDataset({
           projectId,
-          questionId: nanoid(), // 生成唯一的问题ID
+          questionId: nanoid(), // Generate unique question ID
           question: q,
           answer: a,
           chunkName,
@@ -93,7 +93,7 @@ export async function POST(request, { params }) {
         results.push(newDataset);
         successCount++;
       } catch (error) {
-        errors.push(`第 ${i + 1} 条记录: ${error.message}`);
+        errors.push(`Record ${i + 1}: ${error.message}`);
       }
     }
 

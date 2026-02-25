@@ -9,10 +9,10 @@ import {
 import datasetService from '@/lib/services/datasets';
 import { requireProjectAuth } from '@/lib/auth/apiGuard';
 
-// 优化思维链函数已移至服务层
+// Chain-of-thought optimization moved to service layer
 
 /**
- * 生成数据集（为单个问题生成答案）
+ * Generate dataset (generate answer for single question)
  */
 export async function POST(request, { params }) {
   try {
@@ -21,7 +21,7 @@ export async function POST(request, { params }) {
     const { projectId } = params;
     const { questionId, model, language } = await request.json();
 
-    // 使用数据集生成服务
+    // Use dataset generation service
     const result = await datasetService.generateDatasetForQuestion(projectId, questionId, {
       model,
       language
@@ -40,7 +40,7 @@ export async function POST(request, { params }) {
 }
 
 /**
- * 获取项目的所有数据集
+ * Get all datasets for project
  */
 export async function GET(request, { params }) {
   try {
@@ -48,9 +48,9 @@ export async function GET(request, { params }) {
     if (auth.response) return auth.response;
     const { projectId } = params;
     const { searchParams } = new URL(request.url);
-    // 验证项目ID
+    // Validate project ID
     if (!projectId) {
-      return NextResponse.json({ error: '项目ID不能为空' }, { status: 400 });
+      return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
     }
     const page = parseInt(searchParams.get('page')) || 1;
     const size = parseInt(searchParams.get('size')) || 10;
@@ -85,28 +85,28 @@ export async function GET(request, { params }) {
       return NextResponse.json(data);
     }
 
-    // 获取数据集
+    // Get datasets
     const datasets = await getDatasetsByPagination(
       projectId,
       page,
       size,
       confirmed,
       input,
-      field, // 传递搜索字段参数
-      hasCot, // 传递思维链筛选参数
-      isDistill, // 传递蒸馏数据集筛选参数
-      scoreRange, // 传递评分范围筛选参数
-      customTag, // 传递自定义标签筛选参数
-      noteKeyword, // 传递备注关键字筛选参数
-      chunkName // 传递文本块名称筛选参数
+      field, // Search field param
+      hasCot, // Chain-of-thought filter param
+      isDistill, // Distilled dataset filter param
+      scoreRange, // Score range filter param
+      customTag, // Custom tag filter param
+      noteKeyword, // Note keyword filter param
+      chunkName // Chunk name filter param
     );
 
     return NextResponse.json(datasets);
   } catch (error) {
-    console.error('获取数据集失败:', String(error));
+    console.error('Failed to get datasets:', String(error));
     return NextResponse.json(
       {
-        error: error.message || '获取数据集失败'
+        error: error.message || 'Failed to get datasets'
       },
       { status: 500 }
     );
@@ -114,7 +114,7 @@ export async function GET(request, { params }) {
 }
 
 /**
- * 删除数据集
+ * Delete dataset
  */
 export async function DELETE(request, { params }) {
   try {
@@ -155,7 +155,7 @@ export async function DELETE(request, { params }) {
 }
 
 /**
- * 编辑数据集
+ * Edit dataset
  */
 export async function PATCH(request, { params }) {
   try {
@@ -173,7 +173,7 @@ export async function PATCH(request, { params }) {
         { status: 400 }
       );
     }
-    // 获取所有数据集
+    // Get all datasets
     let dataset = await getDatasetsById(datasetId);
     if (!dataset) {
       return NextResponse.json(
@@ -189,7 +189,7 @@ export async function PATCH(request, { params }) {
     if (cot) data.cot = cot;
     if (question) data.question = question;
 
-    // 保存更新后的数据集列表
+    // Save updated dataset list
     await updateDataset(data);
 
     return NextResponse.json({

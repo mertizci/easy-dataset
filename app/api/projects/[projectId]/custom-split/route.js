@@ -6,10 +6,10 @@ import fs from 'fs/promises';
 import { getProjectRoot } from '@/lib/db/base';
 
 /**
- * 处理自定义分块请求
- * @param {Request} request - 请求对象
- * @param {Object} params - 路由参数
- * @returns {Promise<Response>} - 响应对象
+ * Handle custom split request
+ * @param {Request} request - Request object
+ * @param {Object} params - Route params
+ * @returns {Promise<Response>} - Response object
  */
 export async function POST(request, { params }) {
   try {
@@ -18,29 +18,29 @@ export async function POST(request, { params }) {
     const { projectId } = params;
     const { fileId, fileName, content, splitPoints } = await request.json();
 
-    // 参数验证
+    // Parameter validation
     if (!projectId || !fileId || !fileName || !content || !splitPoints) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
-    // 获取项目根目录
+    // Get project root
     const projectRoot = await getProjectRoot();
     const projectPath = path.join(projectRoot, projectId);
 
-    // 检查项目是否存在
+    // Check if project exists
     try {
       await fs.access(projectPath);
     } catch (error) {
       return NextResponse.json({ error: 'Project does not exist' }, { status: 404 });
     }
 
-    // 先删除该文件已有的文本块
+    // Delete existing chunks for this file
     await deleteChunksByFileId(projectId, fileId);
 
-    // 根据分块点将文件内容分割成多个块
+    // Split file content by split points
     const customChunks = generateCustomChunks(projectId, fileId, fileName, content, splitPoints);
 
-    // 保存新的文本块
+    // Save new chunks
     await saveChunks(customChunks);
 
     return NextResponse.json({
@@ -49,49 +49,49 @@ export async function POST(request, { params }) {
       totalChunks: customChunks.length
     });
   } catch (error) {
-    console.error('自定义分块处理出错:', String(error));
+    console.error('Custom split processing error:', String(error));
     return NextResponse.json({ error: error.message || 'Failed to process custom split request' }, { status: 500 });
   }
 }
 
 /**
- * 根据分块点生成自定义文本块
- * @param {string} projectId - 项目ID
- * @param {string} fileId - 文件ID
- * @param {string} fileName - 文件名
- * @param {string} content - 文件内容
- * @param {Array} splitPoints - 分块点数组
- * @returns {Array} - 生成的文本块数组
+ * Generate custom chunks from split points
+ * @param {string} projectId - Project ID
+ * @param {string} fileId - File ID
+ * @param {string} fileName - File name
+ * @param {string} content - File content
+ * @param {Array} splitPoints - Split points array
+ * @returns {Array} - Generated chunks array
  */
 function generateCustomChunks(projectId, fileId, fileName, content, splitPoints) {
-  // 按位置排序分块点
+  // Sort split points by position
   const sortedPoints = [...splitPoints].sort((a, b) => a.position - b.position);
 
-  // 创建分块
+  // Create chunks
   const chunks = [];
   let startPos = 0;
 
-  // 处理每个分块点
+  // Process each split point
   for (let i = 0; i < sortedPoints.length; i++) {
     const endPos = sortedPoints[i].position;
 
-    // 提取当前分块内容
+    // Extract current chunk content
     const chunkContent = content.substring(startPos, endPos);
 
-    // 跳过空白分块
+    // Skip empty chunks
     if (chunkContent.trim().length === 0) {
       startPos = endPos;
       continue;
     }
 
-    // 创建分块对象
+    // Create chunk object
     const chunk = {
       projectId,
       name: `${path.basename(fileName, path.extname(fileName))}-part-${i + 1}`,
       fileId,
       fileName,
       content: chunkContent,
-      summary: `${fileName} 自定义分块 ${i + 1}/${sortedPoints.length + 1}`,
+      summary: `${fileName} custom chunk ${i + 1}/${sortedPoints.length + 1}`,
       size: chunkContent.length
     };
 
@@ -99,7 +99,7 @@ function generateCustomChunks(projectId, fileId, fileName, content, splitPoints)
     startPos = endPos;
   }
 
-  // 添加最后一个分块（如果有内容）
+  // Add last chunk (if has content)
   const lastChunkContent = content.substring(startPos);
   if (lastChunkContent.trim().length > 0) {
     const lastChunk = {
@@ -108,7 +108,7 @@ function generateCustomChunks(projectId, fileId, fileName, content, splitPoints)
       fileId,
       fileName,
       content: lastChunkContent,
-      summary: `${fileName} 自定义分块 ${sortedPoints.length + 1}/${sortedPoints.length + 1}`,
+      summary: `${fileName} custom chunk ${sortedPoints.length + 1}/${sortedPoints.length + 1}`,
       size: lastChunkContent.length
     };
 

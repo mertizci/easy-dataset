@@ -3,7 +3,7 @@ import { getDatasetsById, getDatasetsCounts, getNavigationItems, updateDatasetMe
 import { requireAuth, requireProjectAccess, isRatingOnlyUser } from '@/lib/auth/apiGuard';
 
 /**
- * 获取项目的所有数据集
+ * Get all datasets for project
  */
 export async function GET(request, { params }) {
   try {
@@ -13,12 +13,12 @@ export async function GET(request, { params }) {
     const { projectId, datasetId } = params;
     const { allowed, response: accessError } = await requireProjectAccess(session.userId, projectId);
     if (accessError) return accessError;
-    // 验证项目ID
+    // Validate project ID
     if (!projectId) {
-      return NextResponse.json({ error: '项目ID不能为空' }, { status: 400 });
+      return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
     }
     if (!datasetId) {
-      return NextResponse.json({ error: '数据集ID不能为空' }, { status: 400 });
+      return NextResponse.json({ error: 'Dataset ID is required' }, { status: 400 });
     }
     const { searchParams } = new URL(request.url);
     const operateType = searchParams.get('operateType');
@@ -31,10 +31,10 @@ export async function GET(request, { params }) {
 
     return NextResponse.json({ datasets, ...counts });
   } catch (error) {
-    console.error('获取数据集详情失败:', String(error));
+    console.error('Failed to get dataset details:', String(error));
     return NextResponse.json(
       {
-        error: error.message || '获取数据集详情失败'
+        error: error.message || 'Failed to get dataset details'
       },
       { status: 500 }
     );
@@ -42,8 +42,8 @@ export async function GET(request, { params }) {
 }
 
 /**
- * 更新数据集元数据（评分、标签、备注）
- * Reviewer: 仅允许更新 score
+ * Update dataset metadata (score, tags, note)
+ * Reviewer: only score updates allowed
  */
 export async function PATCH(request, { params }) {
   try {
@@ -57,24 +57,24 @@ export async function PATCH(request, { params }) {
     const body = await request.json();
     let { score, tags, note } = body;
 
-    // Reviewer: 仅允许更新 score
+    // Reviewer: only score updates allowed
     const ratingOnly = await isRatingOnlyUser(session.userId, projectId);
     if (ratingOnly) {
       tags = undefined;
       note = undefined;
     }
 
-    // 验证评分范围
+    // Validate score range
     if (score !== undefined && (score < 0 || score > 5)) {
-      return NextResponse.json({ error: '评分必须在0-5之间' }, { status: 400 });
+      return NextResponse.json({ error: 'Score must be between 0 and 5' }, { status: 400 });
     }
 
-    // 验证标签格式（仅 admin）
+    // Validate tags format (admin only)
     if (tags !== undefined && !Array.isArray(tags)) {
-      return NextResponse.json({ error: '标签必须是数组格式' }, { status: 400 });
+      return NextResponse.json({ error: 'Tags must be an array' }, { status: 400 });
     }
 
-    // 更新数据集元数据
+    // Update dataset metadata
     const updatedDataset = await updateDatasetMetadata(datasetId, { score, tags, note });
 
     return NextResponse.json({
@@ -82,10 +82,10 @@ export async function PATCH(request, { params }) {
       dataset: updatedDataset
     });
   } catch (error) {
-    console.error('更新数据集元数据失败:', String(error));
+    console.error('Failed to update dataset metadata:', String(error));
     return NextResponse.json(
       {
-        error: error.message || '更新数据集元数据失败'
+        error: error.message || 'Failed to update dataset metadata'
       },
       { status: 500 }
     );

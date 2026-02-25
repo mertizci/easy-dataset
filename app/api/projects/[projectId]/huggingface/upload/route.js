@@ -7,7 +7,7 @@ import path from 'path';
 import os from 'os';
 import { uploadFiles, createRepo, checkRepoAccess } from '@huggingface/hub';
 
-// 上传数据集到 HuggingFace
+// Upload dataset to HuggingFace
 export async function POST(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
@@ -26,26 +26,26 @@ export async function POST(request, { params }) {
       reasoningLanguage
     } = await request.json();
 
-    // 获取项目信息
+    // Get project info
     const project = await getProject(projectId);
     if (!project) {
-      return NextResponse.json({ error: '项目不存在' }, { status: 404 });
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    // 获取数据集问题
+    // Get dataset questions
     const questions = await getDatasets(projectId, confirmedOnly);
     if (!questions || questions.length === 0) {
-      return NextResponse.json({ error: '没有可用的数据集问题' }, { status: 400 });
+      return NextResponse.json({ error: 'No dataset questions available' }, { status: 400 });
     }
 
-    // 格式化数据集
+    // Format dataset
     const formattedData = formatDataset(questions, formatType, systemPrompt, includeCOT, customFields);
 
-    // 创建临时目录
+    // Create temp directory
     const tempDir = path.join(os.tmpdir(), `hf-upload-${projectId}-${Date.now()}`);
     fs.mkdirSync(tempDir, { recursive: true });
 
-    // 创建数据集文件
+    // Create dataset file
     const datasetFilePath = path.join(tempDir, `dataset.${fileFormat}`);
     if (fileFormat === 'json') {
       fs.writeFileSync(datasetFilePath, JSON.stringify(formattedData, null, 2));
@@ -57,19 +57,19 @@ export async function POST(request, { params }) {
       fs.writeFileSync(datasetFilePath, csvContent);
     }
 
-    // 创建 README.md 文件
+    // Create README.md file
     const readmePath = path.join(tempDir, 'README.md');
     const readmeContent = generateReadme(project.name, project.description, formatType);
     fs.writeFileSync(readmePath, readmeContent);
 
-    // 使用 Hugging Face REST API 上传数据集
+    // Upload dataset using Hugging Face REST API
     const visibility = isPrivate ? 'private' : 'public';
 
     try {
-      // 准备仓库配置
+      // Prepare repo config
       const repo = { type: 'dataset', name: datasetName };
 
-      // 检查仓库是否存在
+      // Check if repo exists
       let repoExists = true;
       try {
         await checkRepoAccess({ repo, accessToken: token });
@@ -101,20 +101,20 @@ export async function POST(request, { params }) {
         }
       }
 
-      // 2. 上传数据集文件
+      // 2. Upload dataset file
       await uploadFile(token, datasetName, datasetFilePath, `dataset.${fileFormat}`);
 
-      // 3. 上传 README.md
+      // 3. Upload README.md
       await uploadFile(token, datasetName, readmePath, 'README.md');
     } catch (error) {
       console.error('Upload to HuggingFace Failed:', String(error));
       return NextResponse.json({ error: `Upload Error: ${error.message}` }, { status: 500 });
     }
 
-    // 清理临时目录
+    // Clean up temp directory
     fs.rmSync(tempDir, { recursive: true, force: true });
 
-    // 返回成功信息
+    // Return success info
     const datasetUrl = `https://huggingface.co/datasets/${datasetName}`;
     return NextResponse.json({
       success: true,
@@ -127,7 +127,7 @@ export async function POST(request, { params }) {
   }
 }
 
-// 格式化数据集
+// Format dataset
 function formatDataset(questions, formatType, systemPrompt, includeCOT, customFields) {
   if (formatType === 'alpaca') {
     return questions.map(q => {
@@ -230,14 +230,14 @@ function formatDataset(questions, formatType, systemPrompt, includeCOT, customFi
     });
   }
 
-  // 默认返回 alpaca 格式
+  // Default: return alpaca format
   return questions.map(q => ({
     instruction: q.question,
     output: includeCOT && q.cot ? `${q.cot}\n\n${q.answer}` : q.answer
   }));
 }
 
-// 将数据转换为 CSV 格式
+// Convert data to CSV format
 function convertToCSV(data) {
   if (!data || data.length === 0) return '';
 
@@ -249,7 +249,7 @@ function convertToCSV(data) {
       .map(header => {
         const value = item[header];
         if (typeof value === 'string') {
-          // 处理字符串中的逗号和引号
+          // Handle commas and quotes in strings
           return `"${value.replace(/"/g, '""')}"`;
         } else if (Array.isArray(value)) {
           return `"${JSON.stringify(value).replace(/"/g, '""')}"`;
@@ -264,16 +264,16 @@ function convertToCSV(data) {
   return [headerRow, ...rows].join('\n');
 }
 
-// 使用 @huggingface/hub 包上传文件到 HuggingFace
+// Upload file to HuggingFace using @huggingface/hub
 async function uploadFile(token, datasetName, filePath, destFileName) {
   try {
-    // 准备仓库配置
+    // Prepare repo config
     const repo = { type: 'dataset', name: datasetName };
 
-    // 创建文件 URL
+    // Create file URL
     const fileUrl = new URL(`file://${filePath}`);
 
-    // 使用 @huggingface/hub 包上传文件
+    // Upload file using @huggingface/hub
     await uploadFiles({
       repo,
       accessToken: token,

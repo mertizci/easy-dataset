@@ -1,6 +1,6 @@
 /**
- * 多轮对话数据集导出API
- * 直接导出原始的 ShareGPT 格式数据集
+ * Multi-turn conversation dataset export API
+ * Exports raw ShareGPT format dataset
  */
 
 import { NextResponse } from 'next/server';
@@ -8,7 +8,7 @@ import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getAllDatasetConversations } from '@/lib/db/dataset-conversations';
 
 /**
- * 导出多轮对话数据集
+ * Export multi-turn conversation dataset
  */
 export async function GET(request, { params }) {
   try {
@@ -17,33 +17,33 @@ export async function GET(request, { params }) {
     const { projectId } = params;
     const { searchParams } = new URL(request.url);
 
-    // 筛选条件
+    // Filter conditions
     const filters = {
       confirmed: searchParams.get('confirmed')
     };
 
-    // 清除空值
+    // Remove empty values
     Object.keys(filters).forEach(key => {
       if (!filters[key]) delete filters[key];
     });
 
-    // 获取所有对话数据集
+    // Fetch all conversation datasets
     const conversations = await getAllDatasetConversations(projectId, filters);
 
     if (conversations.length === 0) {
       return NextResponse.json([]);
     }
 
-    // 转换为 ShareGPT 格式数组
+    // Convert to ShareGPT format array
     const shareGptData = [];
 
     for (const conversation of conversations) {
       try {
-        // 解析 rawMessages
+        // Parse rawMessages
         const messages = JSON.parse(conversation.rawMessages || '[]');
 
         if (messages.length > 0) {
-          // 构建 ShareGPT 格式对象
+          // Build ShareGPT format object
           const shareGptItem = {
             messages: messages
           };
@@ -51,15 +51,15 @@ export async function GET(request, { params }) {
           shareGptData.push(shareGptItem);
         }
       } catch (error) {
-        console.error(`解析对话消息失败 ${conversation.id}:`, error);
-        // 跳过解析失败的对话，继续处理其他对话
+        console.error(`Failed to parse conversation messages ${conversation.id}:`, error);
+        // Skip failed conversations, continue with others
         continue;
       }
     }
 
     return NextResponse.json(shareGptData);
   } catch (error) {
-    console.error('导出多轮对话数据集失败:', error);
+    console.error('Failed to export conversation dataset:', error);
     return NextResponse.json(
       {
         success: false,

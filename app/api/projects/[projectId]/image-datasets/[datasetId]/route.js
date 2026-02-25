@@ -5,7 +5,7 @@ import { requireAuth, requireProjectAccess, isRatingOnlyUser } from '@/lib/auth/
 import fs from 'fs/promises';
 import path from 'path';
 
-// 获取单个数据集详情
+// Get single dataset details
 export async function GET(request, { params }) {
   try {
     const { session, response: authError } = await requireAuth(request);
@@ -21,10 +21,10 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Dataset not found' }, { status: 404 });
     }
 
-    // 获取项目路径
+    // Get project path
     const projectPath = await getProjectPath(projectId);
 
-    // 读取图片 base64
+    // Read image base64
     let base64 = null;
     try {
       const imagePath = path.join(projectPath, 'images', dataset.imageName);
@@ -37,7 +37,7 @@ export async function GET(request, { params }) {
       console.error(`Failed to read image ${dataset.imageName}:`, error);
     }
 
-    // 添加图片 base64
+    // Add image base64
     const datasetWithImage = {
       ...dataset,
       base64
@@ -50,8 +50,8 @@ export async function GET(request, { params }) {
   }
 }
 
-// 更新数据集
-// Reviewer: 仅允许更新 score
+// Update dataset
+// Reviewer: only allow updating score
 export async function PUT(request, { params }) {
   try {
     const { session, response: authError } = await requireAuth(request);
@@ -63,25 +63,25 @@ export async function PUT(request, { params }) {
 
     let updates = await request.json();
 
-    // 验证数据集存在且属于该项目
+    // Validate dataset exists and belongs to project
     const dataset = await getImageDatasetById(datasetId);
     if (!dataset || dataset.projectId !== projectId) {
       return NextResponse.json({ error: 'Dataset not found' }, { status: 404 });
     }
 
-    // Reviewer: 仅允许更新 score
+    // Reviewer: only allow updating score
     const ratingOnly = await isRatingOnlyUser(session.userId, projectId);
     if (ratingOnly) {
       updates = { score: updates.score };
     }
 
-    // 更新数据集
+    // Update dataset
     const updated = await updateImageDataset(datasetId, updates);
 
-    // 获取项目路径
+    // Get project path
     const projectPath = await getProjectPath(projectId);
 
-    // 读取图片 base64
+    // Read image base64
     let base64 = null;
     try {
       const imagePath = path.join(projectPath, 'images', updated.imageName);
@@ -94,7 +94,7 @@ export async function PUT(request, { params }) {
       console.error(`Failed to read image ${updated.imageName}:`, error);
     }
 
-    // 添加图片 base64
+    // Add image base64
     const updatedWithImage = {
       ...updated,
       base64
@@ -107,7 +107,7 @@ export async function PUT(request, { params }) {
   }
 }
 
-// 删除数据集（仅 admin）
+// Delete dataset (admin only)
 export async function DELETE(request, { params }) {
   try {
     const { session, response: authError } = await requireAuth(request);
@@ -118,7 +118,7 @@ export async function DELETE(request, { params }) {
 
     const { projectId, datasetId } = params;
 
-    // 验证数据集存在且属于该项目
+    // Validate dataset exists and belongs to project
     const dataset = await getImageDatasetById(datasetId);
     if (!dataset || dataset.projectId !== projectId) {
       return NextResponse.json({ error: 'Dataset not found' }, { status: 404 });

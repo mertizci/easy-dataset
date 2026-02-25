@@ -20,30 +20,30 @@ export const dynamic = 'force-dynamic';
 // This tells Next.js not to parse the request body automatically
 export const bodyParser = false;
 
-// 获取项目文件列表
+// Get project file list
 export async function GET(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params);
     if (auth.response) return auth.response;
     const { projectId } = params;
 
-    // 验证项目ID
+    // Validate project ID
     if (!projectId) {
       return NextResponse.json({ error: 'The project ID cannot be empty' }, { status: 400 });
     }
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page')) || 1;
-    const pageSize = parseInt(searchParams.get('pageSize')) || 10; // 每页10个文件，支持分页
+    const pageSize = parseInt(searchParams.get('pageSize')) || 10; // 10 files per page
     const fileName = searchParams.get('fileName') || '';
-    const getAllIds = searchParams.get('getAllIds') === 'true'; // 新增：获取所有文件ID的标志
+    const getAllIds = searchParams.get('getAllIds') === 'true'; // Flag to get all file IDs
 
-    // 如果请求所有文件ID，直接返回ID列表
+    // If requesting all file IDs, return ID list directly
     if (getAllIds) {
-      const allFiles = await getUploadFilesPagination(projectId, 1, 9999, fileName); // 获取所有文件
+      const allFiles = await getUploadFilesPagination(projectId, 1, 9999, fileName); // Get all files
       const allFileIds = allFiles.data?.map(file => String(file.id)) || [];
       return NextResponse.json({ allFileIds });
     }
-    // 获取文件列表
+    // Get file list
     const files = await getUploadFilesPagination(projectId, page, pageSize, fileName);
 
     return NextResponse.json(files);
@@ -53,7 +53,7 @@ export async function GET(request, { params }) {
   }
 }
 
-// 删除文件
+// Delete file
 export async function DELETE(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
@@ -63,12 +63,12 @@ export async function DELETE(request, { params }) {
     const fileId = searchParams.get('fileId');
     const domainTreeAction = searchParams.get('domainTreeAction') || 'keep';
 
-    // 从请求体中获取模型信息和语言环境
+    // Get model info and language from request body
     const requestData = await request.json();
     const model = requestData.model;
     const language = requestData.language || 'en';
 
-    // 验证项目ID和文件名
+    // Validate project ID and file name
     if (!projectId) {
       return NextResponse.json({ error: 'The project ID cannot be empty' }, { status: 400 });
     }
@@ -77,13 +77,13 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: 'The file name cannot be empty' }, { status: 400 });
     }
 
-    // 获取项目信息
+    // Get project info
     const project = await getProject(projectId);
     if (!project) {
       return NextResponse.json({ error: 'The project does not exist' }, { status: 404 });
     }
 
-    // 删除文件及其相关的文本块、问题和数据集
+    // Delete file and related chunks, questions, datasets
     const { stats, fileName, fileInfo } = await delUploadFileInfoById(fileId);
     const deleteToc = await getProjectTocByName(projectId, fileName);
     try {
@@ -93,42 +93,42 @@ export async function DELETE(request, { params }) {
       const baseName = path.basename(fileInfo.fileName, path.extname(fileInfo.fileName));
       const tocPath = path.join(tocDir, `${baseName}-toc.json`);
 
-      // 检查文件是否存在再删除
+      // Check file exists before delete
       await fs.unlink(tocPath);
-      console.log(`成功删除 TOC 文件: ${tocPath}`);
+      console.log(`Successfully deleted TOC file: ${tocPath}`);
     } catch (error) {
-      console.error(`删除 TOC 文件失败:`, String(error));
-      // 即使 TOC 文件删除失败，不影响整体结果
+      console.error(`Failed to delete TOC file:`, String(error));
+      // TOC file delete failure does not affect overall result
     }
 
-    // 如果选择了保持领域树不变，直接返回删除结果
+    // If keep domain tree selected, return delete result directly
     if (domainTreeAction === 'keep') {
       return NextResponse.json({
-        message: '文件删除成功',
+        message: 'File deleted successfully',
         stats: stats,
         domainTreeAction: 'keep',
         cascadeDelete: true
       });
     }
 
-    // 处理领域树更新
+    // Handle domain tree update
     try {
-      // 获取项目的所有文件
+      // Get all project files
       const { chunks, toc } = await getProjectChunks(projectId);
 
-      // 如果不存在文本块，说明项目已经没有文件了
+      // If no chunks exist, project has no files
       if (!chunks || chunks.length === 0) {
-        // 清空领域树
+        // Clear domain tree
         await batchSaveTags(projectId, []);
         return NextResponse.json({
-          message: '文件删除成功，领域树已清空',
+          message: 'File deleted successfully, domain tree cleared',
           stats: stats,
           domainTreeAction,
           cascadeDelete: true
         });
       }
 
-      // 调用领域树处理模块
+      // Call domain tree handler
       await handleDomainTree({
         projectId,
         action: domainTreeAction,
@@ -140,11 +140,11 @@ export async function DELETE(request, { params }) {
       });
     } catch (error) {
       console.error('Error updating domain tree after file deletion:', String(error));
-      // 即使领域树更新失败，也不影响文件删除的结果
+      // Domain tree update failure does not affect file delete result
     }
 
     return NextResponse.json({
-      message: '文件删除成功',
+      message: 'File deleted successfully',
       stats: stats,
       domainTreeAction,
       cascadeDelete: true
@@ -155,20 +155,20 @@ export async function DELETE(request, { params }) {
   }
 }
 
-// 上传文件
+// Upload file
 export async function POST(request, { params }) {
   const auth = await requireProjectAuth(request, params, { requireAdmin: true });
   if (auth.response) return auth.response;
   console.log('File upload request processing, parameters:', params);
   const { projectId } = params;
 
-  // 验证项目ID
+  // Validate project ID
   if (!projectId) {
     console.log('The project ID cannot be empty, returning 400 error');
     return NextResponse.json({ error: 'The project ID cannot be empty' }, { status: 400 });
   }
 
-  // 获取项目信息
+  // Get project info
   const project = await getProject(projectId);
   if (!project) {
     console.log('The project does not exist, returning 404 error');
@@ -179,7 +179,7 @@ export async function POST(request, { params }) {
   try {
     console.log('Try using alternate methods for file upload...');
 
-    // 检查请求头中是否包含文件名
+    // Check if request header contains file name
     const encodedFileName = request.headers.get('x-file-name');
     const fileName = encodedFileName ? decodeURIComponent(encodedFileName) : null;
     console.log('Get file name from request header:', fileName);
@@ -192,15 +192,15 @@ export async function POST(request, { params }) {
       );
     }
 
-    // 检查文件类型
+    // Check file type
     if (!fileName.endsWith('.md') && !fileName.endsWith('.pdf')) {
       return NextResponse.json({ error: 'Only Markdown files are supported' }, { status: 400 });
     }
 
-    // 直接从请求体中读取二进制数据
+    // Read binary data from request body
     const fileBuffer = Buffer.from(await request.arrayBuffer());
 
-    // 保存文件
+    // Save file
     const projectRoot = await getProjectRoot();
     const projectPath = path.join(projectRoot, projectId);
     const filesDir = path.join(projectPath, 'files');
@@ -209,16 +209,16 @@ export async function POST(request, { params }) {
 
     const filePath = path.join(filesDir, fileName);
     await fs.writeFile(filePath, fileBuffer);
-    //获取文件大小
+    // Get file size
     const stats = await fs.stat(filePath);
-    //获取文件md5
+    // Get file md5
     const md5 = await getFileMD5(filePath);
-    //获取文件扩展名
+    // Get file extension
     const ext = path.extname(filePath);
 
     // let res = await checkUploadFileInfoByMD5(projectId, md5);
     // if (res) {
-    //   return NextResponse.json({ error: `【${fileName}】该文件已在此项目中存在` }, { status: 400 });
+    //   return NextResponse.json({ error: `File [${fileName}] already exists in this project` }, { status: 400 });
     // }
 
     let fileInfo = await createUploadFileInfo({

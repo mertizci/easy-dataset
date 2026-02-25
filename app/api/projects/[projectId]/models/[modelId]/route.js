@@ -10,37 +10,37 @@ export async function GET(request, { params }) {
     if (auth.response) return auth.response;
     const { projectId, modelId } = params;
 
-    // 验证项目ID和模型ID
+    // Validate project ID and model ID
     if (!projectId || !modelId) {
       return NextResponse.json({ error: 'The project ID and model ID cannot be empty' }, { status: 400 });
     }
 
-    // 获取项目根目录
+    // Get project root
     const projectRoot = await getProjectRoot();
     const projectPath = path.join(projectRoot, projectId);
 
-    // 检查项目是否存在
+    // Check if project exists
     try {
       await fs.access(projectPath);
     } catch (error) {
       return NextResponse.json({ error: 'The project does not exist' }, { status: 404 });
     }
 
-    // 获取模型配置文件路径
+    // Get model config file path
     const modelConfigPath = path.join(projectPath, 'model-config.json');
 
-    // 检查模型配置文件是否存在
+    // Check if model config file exists
     try {
       await fs.access(modelConfigPath);
     } catch (error) {
       return NextResponse.json({ error: 'The model configuration does not exist' }, { status: 404 });
     }
 
-    // 读取模型配置文件
+    // Read model config file
     const modelConfigData = await fs.readFile(modelConfigPath, 'utf-8');
     const modelConfig = JSON.parse(modelConfigData);
 
-    // 查找指定ID的模型
+    // Find model by ID
     const model = modelConfig.find(model => model.id === modelId);
 
     if (!model) {
@@ -60,61 +60,61 @@ export async function PUT(request, { params }) {
     if (auth.response) return auth.response;
     const { projectId, modelId } = params;
 
-    // 验证项目ID和模型ID
+    // Validate project ID and model ID
     if (!projectId || !modelId) {
       return NextResponse.json({ error: 'The project ID and model ID cannot be empty' }, { status: 400 });
     }
 
-    // 获取请求体
+    // Get request body
     const modelData = await request.json();
 
-    // 验证请求体
+    // Validate request body
     if (!modelData || !modelData.provider || !modelData.name) {
       return NextResponse.json({ error: 'The model data is incomplete' }, { status: 400 });
     }
 
-    // 获取项目根目录
+    // Get project root
     const projectRoot = await getProjectRoot();
     const projectPath = path.join(projectRoot, projectId);
 
-    // 检查项目是否存在
+    // Check if project exists
     try {
       await fs.access(projectPath);
     } catch (error) {
       return NextResponse.json({ error: 'The project does not exist' }, { status: 404 });
     }
 
-    // 获取模型配置文件路径
+    // Get model config file path
     const modelConfigPath = path.join(projectPath, 'model-config.json');
 
-    // 读取模型配置文件
+    // Read model config file
     let modelConfig = [];
     try {
       const modelConfigData = await fs.readFile(modelConfigPath, 'utf-8');
       modelConfig = JSON.parse(modelConfigData);
     } catch (error) {
-      // 如果文件不存在，创建一个空数组
+      // If file does not exist, create empty array
     }
 
-    // 更新模型数据
+    // Update model data
     const modelIndex = modelConfig.findIndex(model => model.id === modelId);
 
     if (modelIndex >= 0) {
-      // 更新现有模型
+      // Update existing model
       modelConfig[modelIndex] = {
         ...modelConfig[modelIndex],
         ...modelData,
-        id: modelId // 确保ID不变
+        id: modelId // Ensure ID unchanged
       };
     } else {
-      // 添加新模型
+      // Add new model
       modelConfig.push({
         ...modelData,
         id: modelId
       });
     }
 
-    // 写入模型配置文件
+    // Write model config file
     await fs.writeFile(modelConfigPath, JSON.stringify(modelConfig, null, 2), 'utf-8');
 
     return NextResponse.json({ message: 'Model configuration updated successfully' });
@@ -130,46 +130,46 @@ export async function DELETE(request, { params }) {
     if (auth.response) return auth.response;
     const { projectId, modelId } = params;
 
-    // 验证项目ID和模型ID
+    // Validate project ID and model ID
     if (!projectId || !modelId) {
       return NextResponse.json({ error: 'The project ID and model ID cannot be empty' }, { status: 400 });
     }
 
-    // 获取项目根目录
+    // Get project root
     const projectRoot = await getProjectRoot();
     const projectPath = path.join(projectRoot, projectId);
 
-    // 检查项目是否存在
+    // Check if project exists
     try {
       await fs.access(projectPath);
     } catch (error) {
       return NextResponse.json({ error: 'The project does not exist' }, { status: 404 });
     }
 
-    // 获取模型配置文件路径
+    // Get model config file path
     const modelConfigPath = path.join(projectPath, 'model-config.json');
 
-    // 检查模型配置文件是否存在
+    // Check if model config file exists
     try {
       await fs.access(modelConfigPath);
     } catch (error) {
       return NextResponse.json({ error: 'The model configuration does not exist' }, { status: 404 });
     }
 
-    // 读取模型配置文件
+    // Read model config file
     const modelConfigData = await fs.readFile(modelConfigPath, 'utf-8');
     let modelConfig = JSON.parse(modelConfigData);
 
-    // 过滤掉要删除的模型
+    // Filter out model to delete
     const initialLength = modelConfig.length;
     modelConfig = modelConfig.filter(model => model.id !== modelId);
 
-    // 检查是否找到并删除了模型
+    // Check if model was found and deleted
     if (modelConfig.length === initialLength) {
       return NextResponse.json({ error: 'The model does not exist' }, { status: 404 });
     }
 
-    // 写入模型配置文件
+    // Write model config file
     await fs.writeFile(modelConfigPath, JSON.stringify(modelConfig, null, 2), 'utf-8');
 
     return NextResponse.json({ message: 'Model deleted successfully' });

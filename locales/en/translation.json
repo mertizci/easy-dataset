@@ -2,12 +2,14 @@
   "language": {
     "switchToEnglish": "Switch to English",
     "switchToChinese": "Switch to Chinese",
+    "switchToTurkish": "Switch to Turkish",
     "switcherTitle": "Change Language / 切换语言 / Dil Değiştir",
     "english": "English",
     "chineseSimplified": "Simplified Chinese",
     "turkish": "Turkish",
     "en": "EN",
-    "zh": "中"
+    "zh": "中",
+    "tr": "TR"
   },
   "theme": {
     "switchToLight": "Switch to Light Mode",
@@ -24,7 +26,11 @@
     "register": "Register",
     "registerTitle": "Create Admin Account",
     "registerSubtitle": "First-time setup: create the initial admin account",
-    "adminExists": "An admin account already exists. Please sign in."
+    "adminExists": "An admin account already exists. Please sign in.",
+    "name": "Name",
+    "nameOptional": "Name (optional)",
+    "passwordOptional": "Optional (for new user)",
+    "passwordMinLength": "At least 6 characters"
   },
   "settings": {
     "promptConfig": "Prompt Configuration",
@@ -57,6 +63,11 @@
     "deleteFailed": "Delete Failed",
     "fetchTasksFailed": "Failed to fetch task settings",
     "saveTasksFailed": "Failed to save task settings",
+    "userAccess": "User Access",
+    "userAccessDesc": "Add reviewers who can view this project and rate questions/answers.",
+    "noUsers": "No reviewers assigned yet.",
+    "addUserFailed": "Failed to add user",
+    "removeUserFailed": "Failed to remove user",
     "textSplitSettings": "Text Split Settings",
     "minLength": "Minimum Length",
     "maxLength": "Maximum Split Length",
@@ -283,6 +294,7 @@
     "complete": "Complete",
     "close": "Close",
     "add": "Add",
+    "optional": "Optional",
     "remove": "Remove",
     "loading": "Loading...",
     "yes": "Yes",
@@ -357,7 +369,9 @@
     "viewDetails": "View Details",
     "createFirst": "Please create a project first",
     "noProjects": "No projects found",
+    "noDescription": "No description",
     "notExist": "The project does not exist.",
+    "projectMenu": "Project menu",
     "createProject": "Create Project",
     "deleteConfirm": "Are you sure you want to delete this project? This action cannot be undone.",
     "deleteSuccess": "Project deleted successfully",

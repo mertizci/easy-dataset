@@ -3,7 +3,7 @@ import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import templateDb from '@/lib/db/questionTemplates';
 import { generateQuestionsFromTemplateEdit } from '@/lib/services/questions/template';
 
-// 获取单个模板
+// Get single template
 export async function GET(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params);
@@ -13,10 +13,10 @@ export async function GET(request, { params }) {
     const template = await templateDb.getTemplateById(templateId);
 
     if (!template) {
-      return NextResponse.json({ error: '模板不存在' }, { status: 404 });
+      return NextResponse.json({ error: 'Template not found' }, { status: 404 });
     }
 
-    // 获取使用统计
+    // Get usage stats
     const usageCount = await templateDb.getTemplateUsageCount(templateId);
 
     return NextResponse.json({
@@ -32,7 +32,7 @@ export async function GET(request, { params }) {
   }
 }
 
-// 更新问题模板
+// Update question template
 export async function PUT(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
@@ -42,14 +42,14 @@ export async function PUT(request, { params }) {
 
     const { question, sourceType, answerType, description, labels, customFormat, order, autoGenerate } = data;
 
-    // 验证数据源类型
+    // Validate source type
     if (sourceType && !['image', 'text'].includes(sourceType)) {
-      return NextResponse.json({ error: '无效的数据源类型' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid source type' }, { status: 400 });
     }
 
-    // 验证答案类型
+    // Validate answer type
     if (answerType && !['text', 'label', 'custom_format'].includes(answerType)) {
-      return NextResponse.json({ error: '无效的答案类型' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid answer type' }, { status: 400 });
     }
 
     const updateData = {};
@@ -65,17 +65,17 @@ export async function PUT(request, { params }) {
 
     let generationResult = null;
 
-    // 如果启用自动生成，则为还未创建此模板问题的数据源创建问题
+    // If auto-generate enabled, create questions for data sources without this template
     if (autoGenerate) {
       try {
         generationResult = await generateQuestionsFromTemplateEdit(projectId, template);
       } catch (error) {
-        console.error('编辑模式自动生成问题失败:', error);
+        console.error('Auto-generate questions failed in edit mode:', error);
         generationResult = {
           success: false,
           successCount: 0,
           failCount: 0,
-          message: '自动生成问题时发生错误'
+          message: 'Error occurred while auto-generating questions'
         };
       }
     }
@@ -91,24 +91,24 @@ export async function PUT(request, { params }) {
   }
 }
 
-// 删除问题模板
+// Delete question template
 export async function DELETE(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
     if (auth.response) return auth.response;
     const { templateId } = params;
 
-    // 检查是否有关联的问题
+    // Check for linked questions
     const usageCount = await templateDb.getTemplateUsageCount(templateId);
     if (usageCount > 0) {
-      return NextResponse.json({ error: `此模板已被 ${usageCount} 个问题使用，无法删除` }, { status: 400 });
+      return NextResponse.json({ error: `Template is used by ${usageCount} questions, cannot delete` }, { status: 400 });
     }
 
     await templateDb.deleteTemplate(templateId);
 
     return NextResponse.json({
       success: true,
-      message: '模板删除成功'
+      message: 'Template deleted successfully'
     });
   } catch (error) {
     console.error('Failed to delete template:', error);

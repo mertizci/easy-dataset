@@ -9,8 +9,8 @@ import { getProjectRoot } from '@/lib/db/base';
 import { promises as fs } from 'fs';
 
 /**
- * 批量删除文件
- * 复用单个文件删除的完整逻辑，包括领域树修订
+ * Batch delete files
+ * Reuses full single-file delete logic including domain tree revision
  */
 export async function POST(request, { params }) {
   try {
@@ -21,24 +21,24 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
     }
 
-    const { fileIds, domainTreeAction = 'keep', model, language = '中文' } = body;
+    const { fileIds, domainTreeAction = 'keep', model, language = 'en' } = body;
 
     if (!fileIds || !Array.isArray(fileIds) || fileIds.length === 0) {
       return NextResponse.json({ error: 'File IDs array is required' }, { status: 400 });
     }
 
-    console.log('开始处理批量删除文件请求');
-    console.log('项目ID:', projectId);
-    console.log('请求的文件IDs:', fileIds);
-    console.log('领域树操作:', domainTreeAction);
+    console.log('Processing batch delete files request');
+    console.log('Project ID:', projectId);
+    console.log('Requested file IDs:', fileIds);
+    console.log('Domain tree action:', domainTreeAction);
 
-    // 获取项目信息
+    // Get project info
     const project = await getProject(projectId);
     if (!project) {
       return NextResponse.json({ error: 'The project does not exist' }, { status: 404 });
     }
 
-    // 验证文件并删除
+    // Validate and delete files
     const results = [];
     const deletedTocs = [];
     let deletedCount = 0;
@@ -51,11 +51,11 @@ export async function POST(request, { params }) {
 
     for (const fileId of fileIds) {
       try {
-        console.log(`正在验证文件: ${fileId}`);
+        console.log(`Validating file: ${fileId}`);
         const fileInfo = await getUploadFileInfoById(fileId);
 
         if (!fileInfo) {
-          console.log(`文件不存在: ${fileId}`);
+          console.log(`File not found: ${fileId}`);
           results.push({
             fileId,
             success: false,
@@ -66,7 +66,7 @@ export async function POST(request, { params }) {
         }
 
         if (fileInfo.projectId !== projectId) {
-          console.log(`文件属于其他项目: ${fileInfo.projectId} != ${projectId}`);
+          console.log(`File belongs to another project: ${fileInfo.projectId} != ${projectId}`);
           results.push({
             fileId,
             success: false,
@@ -76,22 +76,22 @@ export async function POST(request, { params }) {
           continue;
         }
 
-        // 删除文件及其相关的文本块、问题和数据集
-        console.log(`删除文件: ${fileInfo.fileName}`);
+        // Delete file and related chunks, questions, datasets
+        console.log(`Deleting file: ${fileInfo.fileName}`);
         const { stats, fileName } = await delUploadFileInfoById(fileId);
 
-        // 累计统计信息
+        // Accumulate stats
         totalStats.deletedChunks += stats.deletedChunks || 0;
         totalStats.deletedQuestions += stats.deletedQuestions || 0;
         totalStats.deletedDatasets += stats.deletedDatasets || 0;
 
-        // 获取并保存删除的 TOC 信息
+        // Get and save deleted TOC info
         const deleteToc = await getProjectTocByName(projectId, fileName);
         if (deleteToc) {
           deletedTocs.push(deleteToc);
         }
 
-        // 删除 TOC 文件
+        // Delete TOC file
         try {
           const projectRoot = await getProjectRoot();
           const projectPath = path.join(projectRoot, projectId);
@@ -99,9 +99,9 @@ export async function POST(request, { params }) {
           const baseName = path.basename(fileInfo.fileName, path.extname(fileInfo.fileName));
           const tocPath = path.join(tocDir, `${baseName}-toc.json`);
           await fs.unlink(tocPath);
-          console.log(`成功删除 TOC 文件: ${tocPath}`);
+          console.log(`TOC file deleted successfully: ${tocPath}`);
         } catch (error) {
-          console.error(`删除 TOC 文件失败:`, String(error));
+          console.error(`Failed to delete TOC file:`, String(error));
         }
 
         results.push({
@@ -112,9 +112,9 @@ export async function POST(request, { params }) {
         });
         deletedCount++;
 
-        console.log(`成功删除文件: ${fileInfo.fileName}`);
+        console.log(`File deleted successfully: ${fileInfo.fileName}`);
       } catch (error) {
-        console.error(`删除文件 ${fileId} 时出错:`, error);
+        console.error(`Error deleting file ${fileId}:`, error);
         results.push({
           fileId,
           success: false,
@@ -124,9 +124,9 @@ export async function POST(request, { params }) {
       }
     }
 
-    console.log(`批量删除完成: 成功${deletedCount}个, 失败${failedCount}个`);
+    console.log(`Batch delete complete: ${deletedCount} succeeded, ${failedCount} failed`);
 
-    // 如果选择了保持领域树不变，直接返回删除结果
+    // If keep domain tree selected, return delete result directly
     if (domainTreeAction === 'keep') {
       return NextResponse.json({
         success: true,
@@ -140,14 +140,14 @@ export async function POST(request, { params }) {
       });
     }
 
-    // 处理领域树更新
+    // Handle domain tree update
     try {
-      // 获取项目的所有文件
+      // Get all project files
       const { chunks, toc } = await getProjectChunks(projectId);
 
-      // 如果不存在文本块，说明项目已经没有文件了
+      // If no chunks, project has no files left
       if (!chunks || chunks.length === 0) {
-        // 清空领域树
+        // Clear domain tree
         await batchSaveTags(projectId, []);
         return NextResponse.json({
           success: true,
@@ -162,7 +162,7 @@ export async function POST(request, { params }) {
         });
       }
 
-      // 调用领域树处理模块
+      // Call domain tree handler
       await handleDomainTree({
         projectId,
         action: domainTreeAction,
@@ -173,10 +173,10 @@ export async function POST(request, { params }) {
         project
       });
 
-      console.log('领域树更新成功');
+      console.log('Domain tree updated successfully');
     } catch (error) {
       console.error('Error updating domain tree after batch deletion:', String(error));
-      // 即使领域树更新失败，也不影响文件删除的结果
+      // Domain tree update failure does not affect file delete result
     }
 
     return NextResponse.json({

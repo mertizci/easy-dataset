@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getProject, updateProject, getTaskConfig } from '@/lib/db/projects';
 import { requireProjectAuth } from '@/lib/auth/apiGuard';
 
-// 获取项目配置
+// Get project configuration
 export async function GET(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params);
@@ -12,12 +12,12 @@ export async function GET(request, { params }) {
     const taskConfig = await getTaskConfig(projectId);
     return NextResponse.json({ ...config, ...taskConfig });
   } catch (error) {
-    console.error('获取项目配置失败:', String(error));
+    console.error('Failed to get project configuration:', String(error));
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-// 更新项目配置
+// Update project configuration
 export async function PUT(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
@@ -26,7 +26,7 @@ export async function PUT(request, { params }) {
     const newConfig = await request.json();
     const currentConfig = await getProject(projectId);
 
-    // 只更新 prompts 部分
+    // Only update prompts section
     const updatedConfig = {
       ...currentConfig,
       ...newConfig.prompts
@@ -35,7 +35,7 @@ export async function PUT(request, { params }) {
     const config = await updateProject(projectId, updatedConfig);
     return NextResponse.json(config);
   } catch (error) {
-    console.error('更新项目配置失败:', String(error));
+    console.error('Failed to update project configuration:', String(error));
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

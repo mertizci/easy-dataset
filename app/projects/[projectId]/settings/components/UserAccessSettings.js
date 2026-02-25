@@ -61,7 +61,7 @@ export default function UserAccessSettings({ projectId }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || 'Failed to add user');
+        setError(data.error || t('settings.addUserFailed'));
         return;
       }
       setUsers((prev) => [...prev, data.user]);
@@ -83,7 +83,7 @@ export default function UserAccessSettings({ projectId }) {
         method: 'DELETE',
         credentials: 'include'
       });
-      if (!res.ok) throw new Error('Failed to remove');
+      if (!res.ok) throw new Error(t('settings.removeUserFailed'));
       setUsers((prev) => prev.filter((u) => u.id !== userId));
     } catch (err) {
       setError(err.message);
@@ -133,15 +133,15 @@ export default function UserAccessSettings({ projectId }) {
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Optional (for new user)"
+          placeholder={t('auth.passwordOptional')}
           size="small"
           sx={{ minWidth: 150 }}
         />
         <TextField
-          label="Name"
+          label={t('auth.name')}
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Optional"
+          placeholder={t('common.optional', 'Optional')}
           size="small"
           sx={{ minWidth: 120 }}
         />
@@ -155,7 +155,7 @@ export default function UserAccessSettings({ projectId }) {
           <ListItem
             key={u.id}
             secondaryAction={
-              <IconButton edge="end" onClick={() => handleRemove(u.id)} aria-label="Remove">
+              <IconButton edge="end" onClick={() => handleRemove(u.id)} aria-label={t('common.remove')}>
                 <DeleteIcon />
               </IconButton>
             }

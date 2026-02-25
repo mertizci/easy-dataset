@@ -6,7 +6,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import AdmZip from 'adm-zip';
 
-// 压缩包解压并导入图片
+// Extract ZIP and import images
 export async function POST(request, { params }) {
   let tempZipPath = null;
   let tempExtractDir = null;
@@ -19,38 +19,38 @@ export async function POST(request, { params }) {
     const zipFile = formData.get('file');
 
     if (!zipFile) {
-      return NextResponse.json({ error: '请选择压缩包文件' }, { status: 400 });
+      return NextResponse.json({ error: 'Please select a ZIP file' }, { status: 400 });
     }
 
     if (!zipFile.name.toLowerCase().endsWith('.zip')) {
-      return NextResponse.json({ error: '只支持 ZIP 格式的压缩包' }, { status: 400 });
+      return NextResponse.json({ error: 'Only ZIP format is supported' }, { status: 400 });
     }
 
     const projectPath = await getProjectPath(projectId);
     const tempDir = path.join(projectPath, 'temp');
     await fs.mkdir(tempDir, { recursive: true });
 
-    // 1. 保存压缩包到临时目录
+    // 1. Save ZIP to temp directory
     tempZipPath = path.join(tempDir, `temp_${Date.now()}_${zipFile.name}`);
     const zipBuffer = Buffer.from(await zipFile.arrayBuffer());
     await fs.writeFile(tempZipPath, zipBuffer);
 
-    // 2. 创建临时解压目录
+    // 2. Create temp extract directory
     tempExtractDir = path.join(tempDir, `zip_extract_${Date.now()}`);
     await fs.mkdir(tempExtractDir, { recursive: true });
 
-    // 3. 使用 adm-zip 解压文件
-    console.log('开始解压压缩包...');
+    // 3. Extract with adm-zip
+    console.log('Extracting ZIP...');
     const zip = new AdmZip(tempZipPath);
     const zipEntries = zip.getEntries();
 
-    // 支持的图片扩展名
+    // Supported image extensions
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg'];
     let extractedCount = 0;
 
-    // 遍历压缩包中的所有文件
+    // Iterate all files in ZIP
     for (const entry of zipEntries) {
-      // 跳过目录和隐藏文件
+      // Skip directories and hidden files
       if (
         entry.isDirectory ||
         entry.entryName.startsWith('__MACOSX') ||
@@ -61,26 +61,26 @@ export async function POST(request, { params }) {
 
       const ext = path.extname(entry.entryName).toLowerCase();
       if (imageExtensions.includes(ext)) {
-        // 提取文件名（不包含路径）
+        // Extract filename (without path)
         const fileName = path.basename(entry.entryName);
         const targetPath = path.join(tempExtractDir, fileName);
 
-        // 解压文件
+        // Extract file
         zip.extractEntryTo(entry, tempExtractDir, false, true, false, fileName);
         extractedCount++;
       }
     }
 
-    console.log(`压缩包解压完成，提取图片数量: ${extractedCount}`);
+    console.log(`ZIP extracted, image count: ${extractedCount}`);
 
     if (extractedCount === 0) {
-      throw new Error('压缩包中没有找到支持的图片文件');
+      throw new Error('No supported image files found in ZIP');
     }
 
-    // 4. 调用服务层导入图片
+    // 4. Call service to import images
     const importResult = await importImagesFromDirectories(projectId, [tempExtractDir]);
 
-    // 5. 清理临时文件
+    // 5. Clean up temp files
     try {
       if (tempZipPath) {
         await fs.unlink(tempZipPath);
@@ -97,7 +97,7 @@ export async function POST(request, { params }) {
         await fs.rmdir(tempDir);
       }
     } catch (cleanupErr) {
-      console.warn('清理临时文件失败:', cleanupErr);
+      console.warn('Failed to clean up temp files:', cleanupErr);
     }
 
     return NextResponse.json({
@@ -109,7 +109,7 @@ export async function POST(request, { params }) {
   } catch (error) {
     console.error('Failed to import ZIP:', error);
 
-    // 清理临时文件
+    // Clean up temp files
     try {
       if (tempZipPath) {
         await fs.unlink(tempZipPath).catch(() => {});
@@ -122,7 +122,7 @@ export async function POST(request, { params }) {
         await fs.rmdir(tempExtractDir).catch(() => {});
       }
     } catch (cleanupErr) {
-      console.warn('清理临时文件失败:', cleanupErr);
+      console.warn('Failed to clean up temp files:', cleanupErr);
     }
 
     return NextResponse.json({ error: error.message || 'Failed to import ZIP' }, { status: 500 });

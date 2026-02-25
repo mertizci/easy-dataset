@@ -3,38 +3,38 @@ import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import logger from '@/lib/util/logger';
 import cleanService from '@/lib/services/clean';
 
-// 为指定文本块进行数据清洗
+// Data cleaning for specified chunk
 export async function POST(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
     if (auth.response) return auth.response;
     const { projectId, chunkId } = params;
 
-    // 验证项目ID和文本块ID
+    // Validate project ID and chunk ID
     if (!projectId || !chunkId) {
       return NextResponse.json({ error: 'Project ID or text block ID cannot be empty' }, { status: 400 });
     }
 
-    // 获取请求体
-    const { model, language = '中文' } = await request.json();
+    // Get request body
+    const { model, language = 'en' } = await request.json();
 
     if (!model) {
       return NextResponse.json({ error: 'Model cannot be empty' }, { status: 400 });
     }
 
-    // 使用数据清洗服务
+    // Use data cleaning service
     const result = await cleanService.cleanDataForChunk(projectId, chunkId, {
       model,
       language
     });
 
-    // 返回清洗结果
+    // Return cleaning result
     return NextResponse.json({
       chunkId,
       originalLength: result.originalLength,
       cleanedLength: result.cleanedLength,
       success: result.success,
-      message: '数据清洗完成'
+      message: 'Data cleaning completed'
     });
   } catch (error) {
     logger.error('Error cleaning data:', error);

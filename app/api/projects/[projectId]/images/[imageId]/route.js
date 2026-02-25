@@ -2,14 +2,14 @@ import { NextResponse } from 'next/server';
 import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { getImageDetailWithQuestions } from '@/lib/services/images';
 
-// 根据图片ID获取图片详情，包含问题列表和已标注数据
+// Get image details by image ID, including question list and annotations
 export async function GET(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params);
     if (auth.response) return auth.response;
     const { projectId, imageId } = params;
 
-    // 调用服务层获取图片详情
+    // Call service to get image details
     const imageData = await getImageDetailWithQuestions(projectId, imageId);
 
     return NextResponse.json({
@@ -19,16 +19,22 @@ export async function GET(request, { params }) {
   } catch (error) {
     console.error('Failed to get image details:', error);
 
-    // 根据错误类型返回不同的状态码
+    // Return different status codes by error type (service may throw Chinese)
+    const errorMsgMap = {
+      '缺少图片ID': 'Image ID is required',
+      '图片不存在': 'Image not found',
+      '图片不属于指定项目': 'Image does not belong to the specified project'
+    };
     let statusCode = 500;
-    if (error.message === '缺少图片ID') {
+    if (error.message === '缺少图片ID' || error.message === 'Image ID is required') {
       statusCode = 400;
-    } else if (error.message === '图片不存在') {
+    } else if (error.message === '图片不存在' || error.message === 'Image not found') {
       statusCode = 404;
-    } else if (error.message === '图片不属于指定项目') {
+    } else if (error.message === '图片不属于指定项目' || error.message === 'Image does not belong to the specified project') {
       statusCode = 403;
     }
+    const displayError = errorMsgMap[error.message] || error.message || 'Failed to get image details';
 
-    return NextResponse.json({ error: error.message || 'Failed to get image details' }, { status: statusCode });
+    return NextResponse.json({ error: displayError }, { status: statusCode });
   }
 }

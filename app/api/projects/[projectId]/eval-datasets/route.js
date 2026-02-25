@@ -108,7 +108,7 @@ export async function POST(request, { params }) {
       // Validate items
       const validItems = items
         .map(item => {
-          // 确保标签格式正确: 数组转为逗号分隔字符串
+          // Ensure tag format: array to comma-separated string
           let tagsStr = item.tags || '';
           if (Array.isArray(tagsStr)) {
             tagsStr = tagsStr.join(',');
@@ -146,7 +146,7 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Question and Correct Answer are required' }, { status: 400 });
     }
 
-    // 确保标签格式正确: 数组转为逗号分隔字符串
+    // Ensure tag format: array to comma-separated string
     let tagsStr = tags || '';
     if (Array.isArray(tagsStr)) {
       tagsStr = tagsStr.join(',');

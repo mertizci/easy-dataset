@@ -7,7 +7,7 @@ import path from 'path';
 import fs from 'fs';
 
 /**
- * 导出图片文件压缩包
+ * Export image files as ZIP
  */
 export async function GET(request, { params }) {
   try {
@@ -17,35 +17,35 @@ export async function GET(request, { params }) {
     const { searchParams } = new URL(request.url);
     const confirmedOnly = searchParams.get('confirmedOnly') === 'true';
 
-    // 验证项目ID
+    // Validate project ID
     if (!projectId) {
       return NextResponse.json({ error: 'Project ID cannot be empty' }, { status: 400 });
     }
 
-    // 获取数据集（用于确定需要哪些图片）
+    // Get datasets (to determine which images are needed)
     const datasets = await getImageDatasetsForExport(projectId, confirmedOnly);
 
     if (!datasets || datasets.length === 0) {
       return NextResponse.json({ error: 'No data to export' }, { status: 404 });
     }
 
-    // 获取所有需要的图片名称
+    // Get all required image names
     const imageNames = new Set(datasets.map(d => d.imageName).filter(Boolean));
 
     if (imageNames.size === 0) {
       return NextResponse.json({ error: 'No images to export' }, { status: 404 });
     }
 
-    // 创建压缩包
+    // Create archive
     const archive = archiver('zip', {
       zlib: { level: 9 }
     });
 
-    // 设置响应头
+    // Set response headers
     const dateStr = new Date().toISOString().slice(0, 10);
     const filename = `images-${projectId}-${dateStr}.zip`;
 
-    // 添加图片文件到压缩包
+    // Add image files to archive
     const projectPath = await getProjectPath(projectId);
     const imageDir = path.join(projectPath, 'images');
 
@@ -66,10 +66,10 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'No image files found' }, { status: 404 });
     }
 
-    // 完成压缩
+    // Finalize archive
     archive.finalize();
 
-    // 返回流式响应
+    // Return stream response
     return new NextResponse(archive, {
       headers: {
         'Content-Type': 'application/zip',

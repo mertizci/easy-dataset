@@ -5,32 +5,32 @@ import { getTaskConfig } from '@/lib/db/projects';
 import { getChunkById } from '@/lib/db/chunks';
 import { generateQuestionsForChunk, generateQuestionsForChunkWithGA } from '@/lib/services/questions';
 
-// 批量生成问题
+// Batch generate questions
 export async function POST(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
     if (auth.response) return auth.response;
     const { projectId } = params;
 
-    // 验证项目ID
+    // Validate project ID
     if (!projectId) {
       return NextResponse.json({ error: 'The project ID cannot be empty' }, { status: 400 });
     }
 
-    // 获取请求体
-    const { model, chunkIds, language = '中文', enableGaExpansion = false } = await request.json();
+    // Get request body
+    const { model, chunkIds, language = 'zh', enableGaExpansion = false } = await request.json();
 
     if (!model) {
       return NextResponse.json({ error: 'The model cannot be empty' }, { status: 400 });
     }
 
-    // 如果没有指定文本块ID，则获取所有文本块
+    // If no chunk IDs specified, get all chunks
     let chunks = [];
     if (!chunkIds || chunkIds.length === 0) {
       const result = await getProjectChunks(projectId);
       chunks = result.chunks || [];
     } else {
-      // 获取指定的文本块
+      // Get specified chunks
       chunks = await Promise.all(
         chunkIds.map(async chunkId => {
           const chunk = await getChunkById(chunkId);
@@ -44,7 +44,7 @@ export async function POST(request, { params }) {
           return null;
         })
       );
-      chunks = chunks.filter(Boolean); // 过滤掉不存在的文本块
+      chunks = chunks.filter(Boolean); // Filter out non-existent chunks
     }
     if (chunks.length === 0) {
       return NextResponse.json({ error: 'No valid text blocks found' }, { status: 404 });
@@ -53,24 +53,24 @@ export async function POST(request, { params }) {
     const results = [];
     const errors = [];
 
-    // 获取项目 task-config 信息
+    // Get project task-config
     const taskConfig = await getTaskConfig(projectId);
     const { questionGenerationLength } = taskConfig;
     for (const chunk of chunks) {
       try {
-        // 根据文本长度自动计算问题数量
+        // Auto-calculate question count by text length
         const questionNumber = Math.floor(chunk.length / questionGenerationLength);
 
         let result;
         if (enableGaExpansion) {
-          // 使用GA增强的问题生成
+          // Use GA-enhanced question generation
           result = await generateQuestionsForChunkWithGA(projectId, chunk.id, {
             model,
             language,
             number: questionNumber
           });
         } else {
-          // 使用标准问题生成
+          // Use standard question generation
           result = await generateQuestionsForChunk(projectId, chunk.id, {
             model,
             language,
@@ -78,9 +78,9 @@ export async function POST(request, { params }) {
           });
         }
 
-        // 统一处理返回结果格式
+        // Normalize result format
         if (result && result.questions && Array.isArray(result.questions)) {
-          // GA增强模式的结果格式
+          // GA-enhanced mode result format
           results.push({
             chunkId: chunk.id,
             success: true,
@@ -90,7 +90,7 @@ export async function POST(request, { params }) {
             gaPairsCount: result.gaPairsCount
           });
         } else if (result && result.labelQuestions && Array.isArray(result.labelQuestions)) {
-          // 标准模式的结果格式
+          // Standard mode result format
           results.push({
             chunkId: chunk.id,
             success: true,
@@ -114,7 +114,7 @@ export async function POST(request, { params }) {
       }
     }
 
-    // 返回生成结果
+    // Return generation results
     return NextResponse.json({
       results,
       errors,

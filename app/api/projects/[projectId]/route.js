@@ -1,4 +1,4 @@
-// 获取项目详情
+// Get project details
 import { NextResponse } from 'next/server';
 import { deleteProject, getProject, updateProject, getTaskConfig } from '@/lib/db/projects';
 import { requireAuth, requireProjectAccess } from '@/lib/auth/apiGuard';
@@ -15,16 +15,16 @@ export async function GET(request, { params }) {
     const project = await getProject(projectId);
     const taskConfig = await getTaskConfig(projectId);
     if (!project) {
-      return NextResponse.json({ error: '项目不存在' }, { status: 404 });
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
     return NextResponse.json({ ...project, taskConfig });
   } catch (error) {
-    console.error('获取项目详情出错:', String(error));
+    console.error('Failed to get project details:', String(error));
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }
 
-// 更新项目
+// Update project
 export async function PUT(request, { params }) {
   try {
     const { session, response: authError } = await requireAuth(request);
@@ -39,29 +39,29 @@ export async function PUT(request, { params }) {
     const hasNameField = Object.prototype.hasOwnProperty.call(projectData, 'name');
     const hasDefaultModelField = Object.prototype.hasOwnProperty.call(projectData, 'defaultModelConfigId');
 
-    // 至少允许更新名称或默认模型（defaultModelConfigId 可显式为 null）
+    // At least allow updating name or default model (defaultModelConfigId can be explicitly null)
     if (!hasNameField && !hasDefaultModelField) {
-      return NextResponse.json({ error: '项目名称不能为空' }, { status: 400 });
+      return NextResponse.json({ error: 'Project name is required' }, { status: 400 });
     }
 
     if (hasNameField && !projectData.name && !hasDefaultModelField) {
-      return NextResponse.json({ error: '项目名称不能为空' }, { status: 400 });
+      return NextResponse.json({ error: 'Project name is required' }, { status: 400 });
     }
 
     const updatedProject = await updateProject(projectId, projectData);
 
     if (!updatedProject) {
-      return NextResponse.json({ error: '项目不存在' }, { status: 404 });
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
     return NextResponse.json(updatedProject);
   } catch (error) {
-    console.error('更新项目出错:', String(error));
+    console.error('Failed to update project:', String(error));
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }
 
-// 删除项目
+// Delete project
 export async function DELETE(request, { params }) {
   try {
     const { session, response: authError } = await requireAuth(request);
@@ -74,12 +74,12 @@ export async function DELETE(request, { params }) {
     const success = await deleteProject(projectId);
 
     if (!success) {
-      return NextResponse.json({ error: '项目不存在' }, { status: 404 });
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('删除项目出错:', error);
+    console.error('Failed to delete project:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

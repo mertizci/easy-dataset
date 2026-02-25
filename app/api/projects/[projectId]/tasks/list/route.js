@@ -4,7 +4,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// 获取项目的所有任务列表
+// Get all tasks for project
 export async function GET(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params);
@@ -12,15 +12,15 @@ export async function GET(request, { params }) {
     const { projectId } = params;
     const { searchParams } = new URL(request.url);
 
-    // 可选参数: 任务类型和任务状态
+    // Optional params: task type and status
     const taskType = searchParams.get('taskType');
     const statusStr = searchParams.get('status');
 
-    // 分页参数
+    // Pagination params
     const page = parseInt(searchParams.get('page') || '0');
     const limit = parseInt(searchParams.get('limit') || '10');
 
-    // 构建查询条件
+    // Build query conditions
     const where = { projectId };
 
     if (taskType) {
@@ -31,10 +31,10 @@ export async function GET(request, { params }) {
       where.status = parseInt(statusStr);
     }
 
-    // 获取任务总数
+    // Get total task count
     const total = await prisma.task.count({ where });
 
-    // 获取任务列表，按创建时间降序排序，并应用分页
+    // Get task list, ordered by creation time desc, with pagination
     const tasks = await prisma.task.findMany({
       where,
       orderBy: {
@@ -50,14 +50,14 @@ export async function GET(request, { params }) {
       total,
       page,
       limit,
-      message: '任务列表获取成功'
+      message: 'Task list retrieved successfully'
     });
   } catch (error) {
-    console.error('获取任务列表失败:', String(error));
+    console.error('Failed to get task list:', String(error));
     return NextResponse.json(
       {
         code: 500,
-        error: '获取任务列表失败',
+        error: 'Failed to get task list',
         message: error.message
       },
       { status: 500 }

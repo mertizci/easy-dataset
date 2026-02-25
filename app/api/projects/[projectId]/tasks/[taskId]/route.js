@@ -4,25 +4,25 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// 获取任务详情
+// Get task details
 export async function GET(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params);
     if (auth.response) return auth.response;
     const { projectId, taskId } = params;
 
-    // 验证必填参数
+    // Validate required params
     if (!projectId || !taskId) {
       return NextResponse.json(
         {
           code: 400,
-          error: '缺少必要参数'
+          error: 'Missing required parameters'
         },
         { status: 400 }
       );
     }
 
-    // 查询任务详情
+    // Query task details
     const task = await prisma.task.findUnique({
       where: {
         id: taskId,
@@ -34,7 +34,7 @@ export async function GET(request, { params }) {
       return NextResponse.json(
         {
           code: 404,
-          error: '任务不存在'
+          error: 'Task not found'
         },
         { status: 404 }
       );
@@ -43,14 +43,14 @@ export async function GET(request, { params }) {
     return NextResponse.json({
       code: 0,
       data: task,
-      message: '获取任务详情成功'
+      message: 'Task details retrieved successfully'
     });
   } catch (error) {
-    console.error('获取任务详情失败:', String(error));
+    console.error('Failed to get task details:', String(error));
     return NextResponse.json(
       {
         code: 500,
-        error: '获取任务详情失败',
+        error: 'Failed to get task details',
         message: error.message
       },
       { status: 500 }
@@ -58,7 +58,7 @@ export async function GET(request, { params }) {
   }
 }
 
-// 更新任务状态
+// Update task status
 export async function PATCH(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
@@ -66,21 +66,21 @@ export async function PATCH(request, { params }) {
     const { projectId, taskId } = params;
     const data = await request.json();
 
-    // 验证必填参数
+    // Validate required params
     if (!projectId || !taskId) {
       return NextResponse.json(
         {
           code: 400,
-          error: '缺少必要参数'
+          error: 'Missing required parameters'
         },
         { status: 400 }
       );
     }
 
-    // 获取要更新的字段
+    // Get fields to update
     const { status, completedCount, totalCount, detail, note, endTime } = data;
 
-    // 构建更新数据
+    // Build update data
     const updateData = {};
 
     if (status !== undefined) {
@@ -103,12 +103,12 @@ export async function PATCH(request, { params }) {
       updateData.note = note;
     }
 
-    // 如果状态变为已完成、失败或已中断，自动添加结束时间
+    // Add end time when status becomes completed, failed, or interrupted
     if (status === 1 || status === 2 || status === 3) {
       updateData.endTime = endTime || new Date();
     }
 
-    // 更新任务
+    // Update task
     const updatedTask = await prisma.task.update({
       where: {
         id: taskId
@@ -119,14 +119,14 @@ export async function PATCH(request, { params }) {
     return NextResponse.json({
       code: 0,
       data: updatedTask,
-      message: '更新任务状态成功'
+      message: 'Task status updated successfully'
     });
   } catch (error) {
-    console.error('更新任务状态失败:', String(error));
+    console.error('Failed to update task status:', String(error));
     return NextResponse.json(
       {
         code: 500,
-        error: '更新任务状态失败',
+        error: 'Failed to update task status',
         message: error.message
       },
       { status: 500 }
@@ -134,25 +134,25 @@ export async function PATCH(request, { params }) {
   }
 }
 
-// 删除任务
+// Delete task
 export async function DELETE(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
     if (auth.response) return auth.response;
     const { projectId, taskId } = params;
 
-    // 验证必填参数
+    // Validate required params
     if (!projectId || !taskId) {
       return NextResponse.json(
         {
           code: 400,
-          error: '缺少必要参数'
+          error: 'Missing required parameters'
         },
         { status: 400 }
       );
     }
 
-    // 删除任务
+    // Delete task
     await prisma.task.delete({
       where: {
         id: taskId,
@@ -162,14 +162,14 @@ export async function DELETE(request, { params }) {
 
     return NextResponse.json({
       code: 0,
-      message: '删除任务成功'
+      message: 'Task deleted successfully'
     });
   } catch (error) {
-    console.error('删除任务失败:', String(error));
+    console.error('Failed to delete task:', String(error));
     return NextResponse.json(
       {
         code: 500,
-        error: '删除任务失败',
+        error: 'Failed to delete task',
         message: error.message
       },
       { status: 500 }

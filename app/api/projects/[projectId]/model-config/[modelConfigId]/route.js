@@ -2,13 +2,13 @@ import { NextResponse } from 'next/server';
 import { requireProjectAuth } from '@/lib/auth/apiGuard';
 import { deleteModelConfigById } from '@/lib/db/model-config';
 
-// 删除模型配置
+// Delete model config
 export async function DELETE(request, { params }) {
   try {
     const auth = await requireProjectAuth(request, params, { requireAdmin: true });
     if (auth.response) return auth.response;
     const { projectId, modelConfigId } = params;
-    // 验证项目 ID
+    // Validate project ID
     if (!projectId) {
       return NextResponse.json({ error: 'The project ID cannot be empty' }, { status: 400 });
     }
